@@ -26,20 +26,38 @@
     :author "jm@symbolic-simulation.com"
     :licence "Golden Rule License"
     :description "cl-prebid implementation"
-    :depends-on (#:hunchentoot
-		 #:log4cl
-		 #:cl-who
-		 #:cl-css		; Hopefully, for CSS use
+    :depends-on (#:log4cl
+		 #:cl-fad
 		 #-RELEASE #:clouseau ; For debugging
 		 #:cl-cryptolens      ; For license management
 		 #:com.symsim.oss.global-params	; For configurability
 		 ;; #:com.symsim.licensing		; For products, services, and hunchentoot additions
-		 #:com.symsim.utils ; For hunchentoot additions
+		 #:parenscript
 		 )
     :components ((:file "package")
-		 (:file "easy-handlers" :depends-on ("package"))
 		 (:file "cl-prebid" :depends-on ("package"))
 		 )
     :perform (load-op :after (op c)
 		      (provide "cl-prebid") ; string designator
 		      (format t "~&;; try (cl-prebid:run)~%")))
+
+(defsystem #:cl-prebid/hunchentoot
+    :name "cl-prebid/hunchentoot"
+    :version "0.0.1"
+    :maintainer "jm@symbolic-simulation.com"
+    :author "jm@symbolic-simulation.com"
+    :license "Golden Rule License"
+    :description "cl-prebid for Hunchentoot Web Server"
+    :depends-on (#:cl-prebid
+		 #:cl-who
+		 #:cl-css		; Hopefully, for CSS use
+		 #:hunchentoot
+;;		 #:com.symsim.utils ; For hunchentoot additions
+		 )
+    :components ((:file "package-hunchentoot")
+		 (:file "cl-prebid-hunchentoot" :depends-on ("package-hunchentoot"))
+		 (:file "easy-handlers" :depends-on ("package-hunchentoot" "cl-prebid-hunchentoot")))
+    :perform (load-op :after (op c)
+		      (provide "cl-prebid/hunchentoot") ; string designator
+		      (format t "~&;; try (cl-prebid/hunchentoot:run)~%")))
+
