@@ -19,6 +19,21 @@
 
 (in-package :cl-prebid.asd)
 
+(defsystem #:cl-prebid/parenscript
+    :name "cl-prebid/parenscript"
+    :version "0.0.1"
+    :maintainer "jm@symbolic-simulation.com"
+    :author "jm@symbolic-simulation.com"
+    :licence "Golden Rule License"
+    :description "cl-prebid implementation"
+    :depends-on (#:log4cl
+		 #:parenscript
+		 #:water		; ECMAScript 5 object system
+		 #:paren6		; ECMAScript 6 object system
+		 )
+    :components ((:file "package-parenscript")
+		 (:file "parenscript" :depends-on ("package-parenscript"))))
+
 (defsystem #:cl-prebid
     :name "cl-prebid"
     :version "0.0.1"
@@ -30,9 +45,11 @@
 		 #:cl-fad
 		 #-RELEASE #:clouseau ; For debugging
 		 #:cl-cryptolens      ; For license management
-		 #:com.symsim.oss.global-params	; For configurability
+		 ;; #:com.symsim.oss.global-params	; For configurability
 		 ;; #:com.symsim.licensing		; For products, services, and hunchentoot additions
-		 #:parenscript
+		 ;; #:parenscript
+		 #:cl-prebid/parenscript
+		 #:com.symsim.utils ; For hunchentoot additions
 		 )
     :components ((:file "package")
 		 (:file "cl-prebid" :depends-on ("package"))
@@ -52,7 +69,6 @@
 		 #:cl-who
 		 #:cl-css		; Hopefully, for CSS use
 		 #:hunchentoot
-;;		 #:com.symsim.utils ; For hunchentoot additions
 		 )
     :components ((:file "package-hunchentoot")
 		 (:file "cl-prebid-hunchentoot" :depends-on ("package-hunchentoot"))

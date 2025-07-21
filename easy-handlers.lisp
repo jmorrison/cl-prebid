@@ -10,6 +10,127 @@
 	   (setf cl-who::*downcase-tokens-p* NIL))
 
 (defvar *licensedp* nil)
+
+(setf
+ *test-bidder-banner-ps*
+ '(let ()
+   (setf pbjs (or pbjs (ps:create)))
+   (setf (ps:chain pbjs que) (or (ps:chain pbjs que) (array)))
+   (defparameter ad-unit-code "adUnitCode-0000")
+
+   (defparameter ad-units (array
+			   (ps:create media-types
+				      (ps:create banner (ps:create sizes (array 600 500)))
+				      code ad-unit-code
+				      bids (array (ps:create bidder "testBidder"
+							     params (ps:create)))
+				      )
+			   )
+     )
+   (defun foo (bid) ((ps:chain console log) "foo: " bid) bid)
+   (ps:chain pbjs que (push (lambda ()
+			      (ps:chain pbjs (register-bid-adapter
+					      nil
+					      "testBidder"
+					      (ps:create
+					       supported-media-types (array "banner" "video" "native")
+					       is-bid-request-valid (lambda (bid) t))))
+			      (ps:chain pbjs (set-config (ps:create
+							  debugging (ps:create enabled t
+									       intercept (array (ps:create
+												 when (ps:create bidder "testBidder")
+												 then (ps:create creative-id "testCreativeId")))))))
+			      ;; Bid Response Simulation Section End
+			      (ps:chain pbjs (add-ad-units ad-units))
+			      (ps:chain pbjs (request-bids (ps:create
+							    add-unit-codes (array ad-unit-code)
+							    bids-back-handler (lambda ()
+										(let* ((bids (ps:chain pbjs (get-highest-cpm-bids ad-unit-code)))
+										       (winning-bid (aref bids 0))
+										       (div (ps:chain document (get-element-by-id "banner")))
+										       (iframe (ps:chain document (create-element "iframe"))))
+										  (ps:chain div (append-child iframe))
+										  (let ((iframe-doc (ps:chain iframe content-window document)))
+										    (ps:chain pbjs (render-ad iframe-doc (ps:chain winning-bid ad-id))))))))))
+			    )
+	     )
+   )
+ )
+
+(ps:ps* *test-bidder-banner-ps*)
+
+(setf
+ *test-bidder-banner-js*
+       "
+console.log(pbjs);
+            var pbjs = pbjs || {};
+            pbjs.que = pbjs.que || [];
+
+            const adUnitCode = 'adUnit-0000';
+
+            const adUnits = [{
+                mediaTypes: {
+                    banner: {
+                        sizes: [600, 500]
+                    }
+                },
+                code: adUnitCode,
+                bids: [
+                    {bidder: 'testBidder', params: {}}
+                ]
+            }]
+
+            pbjs.que.push(function () {
+
+                /**
+                 * BID RESPONSE SIMULATION SECTION START
+                 *
+                 * This section handles simulating a bidder
+                 * that will always respond with bid responses.
+                 *
+                 * This part should not be present in production.
+                 */
+                pbjs.registerBidAdapter(null, 'testBidder', {
+                    supportedMediaTypes: ['banner', 'video', 'native'],
+                    isBidRequestValid: () => true
+                });
+
+                pbjs.setConfig({
+                    debugging: {
+                        enabled: true,
+                        intercept: [
+                            {
+                                when: {
+                                    bidder: 'testBidder',
+                                },
+                                then: {
+                                    creativeId: 'testCreativeId',
+                                }
+                            }
+                        ]
+                    }
+                });
+                /**
+                 * BID RESPONSE SIMULATION SECTION END
+                 */
+
+                pbjs.addAdUnits(adUnits);
+                pbjs.requestBids({
+                    adUnitCodes: [adUnitCode],
+                    bidsBackHandler: function() {
+                        const bids = pbjs.getHighestCpmBids(adUnitCode);
+                        const winningBid = bids[0];
+                        const div = document.getElementById('banner');
+                        let iframe = document.createElement('iframe');
+                        iframe.frameBorder = '0';
+                        div.appendChild(iframe);
+                        var iframeDoc = iframe.contentWindow.document;
+                        pbjs.renderAd(iframeDoc, winningBid.adId);
+                    }
+                });
+            });
+")
+
 (defvar *js*
   (ps:ps*
    '(progn
@@ -20,19 +141,19 @@
 			      media-types (ps:create banner (ps:create sizes sizes))
 			      bids (array (ps:create bidder "appnexus" params (ps:create placement-id "XXXXXXX"))))))
      (defvar googletag (or googletag (ps:create)))
-     (setf (ps:@ googletag cmd) (or (ps:@ googletag cmd) (array)))
+     (setf (ps:chain googletag cmd) (or (ps:chain googletag cmd) (array)))
      (ps:chain googletag cmd (push (lambda () (ps:chain googletag (pubads) (disable-initial-load)))))
      (defvar pbjs (or pbjs (create)))
-     (setf (ps:@ pbjs que) (or (ps:@ pbfs que) (array)))
+     (setf (ps:chain pbjs que) (or (ps:chain pbfs que) (array)))
      (ps:chain pbjs que (push (lambda ()
 				(ps:chain pbjs (add-ad-units ad-units))
 				(ps:chain pbjs (request-bids (ps:create bids-back-handler init-adserver))))))
      (defun init-adserver ()
-       (cond ((ps:@ init-adserver-set) nil)
+       (cond ((ps:chain init-adserver-set) nil)
 	     (t
-	      (setf (ps:@ pbjs init-adserver-set) t)
+	      (setf (ps:chain pbjs init-adserver-set) t)
 	      (ps:chain googletag cmd (push (lambda ()
-					      (cond ((ps:@ pbjs lib-loaded)
+					      (cond ((ps:chain pbjs lib-loaded)
 						     (ps:chain pbjs que (push (lambda ()
 										(ps:chain pbjs (set-targeting-for-g-p-t-async))
 										(ps:chain googletag (pubads) (refresh))))))
@@ -106,6 +227,7 @@
        :id "div-0" :style "min-height:250px"
        (:p (:a "landing page div-0"))
        (:p (:a :href "./test-bidder-banner-example" (:b "testBidderBannerExample")))
+       (:p (:a :href "./test-bidder-banner-example2" (:b "testBidderBannerExample 2")))
        (:p (:a :href "./test-bidder-native-example" (:b "testBidderNativeExample")))
        (:p (:a :href "./test-bidder-video-example" (:b "testBidderVideoExample")))
        )))))
@@ -126,6 +248,21 @@
       (:div
        (:p (:a "pa1"))
        (:p (:a "pa2")))
+      (:script
+       #+NIL (str *test-bidder-banner-js*)
+       #-NIL (str (ps:ps* *test-bidder-banner-ps*))
+       )))
+    )
+  )
+(define-easy-handler (test-bidder-banner-example2 :uri "/test-bidder-banner-example2" :acceptor-names '(normal-acceptor))
+    ()
+  "testBidderBannerExample 2"
+  (with-html-output-to-string (*standard-output* nil :prologue t)
+    (:html
+     (:head
+      (:title "testBidderBannerExample")
+      ;; (:script (str (cl-prebid::slurp-javascript-file "Prebid.js/build/dist/prebid.js")))
+      (:script (str (cl-prebid::slurp-javascript-file "prebid10.2.0.js")))
       (:script
        "
             var pbjs = pbjs || {};
@@ -194,7 +331,16 @@
                     }
                 });
             });
-")))
+")
+      )
+     (:body
+      (:div
+       :id "banner")
+      (:div
+       (:p (:a "pa1"))
+       (:p (:a "pa2")))
+      )
+     )
     )
   )
 
