@@ -11,6 +11,10 @@
 
 (defvar *licensedp* nil)
 
+;;
+;; Banner test
+;;
+
 (setf
  *test-bidder-banner-ps*
  '(let ()
@@ -57,8 +61,9 @@
    )
  )
 
-(ps:ps* *test-bidder-banner-ps*)
+;; (ps:ps* *test-bidder-banner-ps*)
 
+#+NIL
 (setf
  *test-bidder-banner-js*
        "
@@ -131,107 +136,6 @@ console.log(pbjs);
             });
 ")
 
-(defvar *js*
-  (ps:ps*
-   '(progn
-     (defvar sizes '(300 200))
-     (defvar *prebid_timeout* 700)
-     (defvar ad-units (array (ps:create
-			      code "/19968336/header-bid-tag-1"
-			      media-types (ps:create banner (ps:create sizes sizes))
-			      bids (array (ps:create bidder "appnexus" params (ps:create placement-id "XXXXXXX"))))))
-     (defvar googletag (or googletag (ps:create)))
-     (setf (ps:chain googletag cmd) (or (ps:chain googletag cmd) (array)))
-     (ps:chain googletag cmd (push (lambda () (ps:chain googletag (pubads) (disable-initial-load)))))
-     (defvar pbjs (or pbjs (create)))
-     (setf (ps:chain pbjs que) (or (ps:chain pbfs que) (array)))
-     (ps:chain pbjs que (push (lambda ()
-				(ps:chain pbjs (add-ad-units ad-units))
-				(ps:chain pbjs (request-bids (ps:create bids-back-handler init-adserver))))))
-     (defun init-adserver ()
-       (cond ((ps:chain init-adserver-set) nil)
-	     (t
-	      (setf (ps:chain pbjs init-adserver-set) t)
-	      (ps:chain googletag cmd (push (lambda ()
-					      (cond ((ps:chain pbjs lib-loaded)
-						     (ps:chain pbjs que (push (lambda ()
-										(ps:chain pbjs (set-targeting-for-g-p-t-async))
-										(ps:chain googletag (pubads) (refresh))))))
-						    (t
-						     (ps:chain googletag (pubads) (refresh))))))))))
-     (set-timeout (lambda () (init-adserver)) *prebid_timeout*)
-     (ps:chain googletag cmd (push (lambda ()
-				     (ps:chain googletag (define-slot "/19968336/header-bid-tag-1" sizes "div-1") (add-service (ps:chain googletag (pubads))))
-				     (ps:chain googletag (pubads) (enable-single-request))
-				     (ps:chain googletag (enable-services)))))
-     (alert "foo"))))
-
-; (clouseau:inspect (ps:ps* '(alert "bar")))
-
-;;
-;; Error condition pages
-;;
-;; Should probably also be moved to com.symsim.utils
-;;
-
-(defun simple-error-page (error-condition-var)
-  (let ((msg #+NIL (apply
-		    'format
-		    nil
-		    (simple-condition-format-control error-condition-var)
-		    (simple-condition-format-arguments error-condition-var))
-	     #-NIL (with-standard-io-syntax (format nil "~a" error-condition-var))))
-    (log:error msg)
-    (with-html-output-to-string (*standard-output* nil :prologue t)
-      (:html
-       (head-of-page "404: Not Found" *standard-output*)
-       (:body
-	(:h1 "404: Not Found")
-	(:h2 "Simple-Error Condition Message")
-	(:p (str msg))
-	(:h2 "Details of Request that Elicited the Error")
-	(info-table
-	 (headers-in       *request*)
-	 (request-method   *request*)
-	 (request-uri      *request*)
-	 (server-protocol  *request*)
-	 (local-addr       *request*)
-	 (local-port       *request*)
-	 (remote-addr      *request*)
-	 (remote-port      *request*)
-	 (hunchentoot::content-stream   *request*)
-	 (cookies-in       *request*)
-	 (get-parameters   *request*)
-	 (post-parameters  *request*)
-	 (script-name      *request*)
-	 (query-string     *request*))))
-      (setf (return-code*) +http-not-found+)
-      nil)))
-
-;;
-;; The landing page for the CL-PREBID stuff.
-;;
-
-(define-easy-handler (landing-page :uri "/" :acceptor-names '(normal-acceptor))
-    ()
-  "Landing test page"
-  (with-html-output-to-string (*standard-output* nil :prologue t)
-    (:html
-     (:head
-      (:title "Landing Page")
-      (:base :href "/")
-      (:script (str (cl-prebid::slurp-javascript-file "prebid10.2.0.js")))
-      )
-     (:body
-      (:div
-       :id "div-0" :style "min-height:250px"
-       (:p (:a "landing page div-0"))
-       (:p (:a :href "./test-bidder-banner-example" (:b "testBidderBannerExample")))
-       (:p (:a :href "./test-bidder-banner-example2" (:b "testBidderBannerExample 2")))
-       (:p (:a :href "./test-bidder-native-example" (:b "testBidderNativeExample")))
-       (:p (:a :href "./test-bidder-video-example" (:b "testBidderVideoExample")))
-       )))))
-      
 (define-easy-handler (test-bidder-banner-example :uri "/test-bidder-banner-example" :acceptor-names '(normal-acceptor))
     ()
   "testBidderBannerExample"
@@ -254,6 +158,7 @@ console.log(pbjs);
        )))
     )
   )
+
 (define-easy-handler (test-bidder-banner-example2 :uri "/test-bidder-banner-example2" :acceptor-names '(normal-acceptor))
     ()
   "testBidderBannerExample 2"
@@ -343,6 +248,69 @@ console.log(pbjs);
      )
     )
   )
+
+;;
+;; Native test
+;;
+
+(defvar *js*
+  (ps:ps*
+   '(progn
+     (defvar sizes '(300 200))
+     (defvar *prebid_timeout* 700)
+     (defvar ad-units (array (ps:create
+			      code "/19968336/header-bid-tag-1"
+			      media-types (ps:create banner (ps:create sizes sizes))
+			      bids (array (ps:create bidder "appnexus" params (ps:create placement-id "XXXXXXX"))))))
+     (defvar googletag (or googletag (ps:create)))
+     (setf (ps:chain googletag cmd) (or (ps:chain googletag cmd) (array)))
+     (ps:chain googletag cmd (push (lambda () (ps:chain googletag (pubads) (disable-initial-load)))))
+     (defvar pbjs (or pbjs (create)))
+     (setf (ps:chain pbjs que) (or (ps:chain pbfs que) (array)))
+     (ps:chain pbjs que (push (lambda ()
+				(ps:chain pbjs (add-ad-units ad-units))
+				(ps:chain pbjs (request-bids (ps:create bids-back-handler init-adserver))))))
+     (defun init-adserver ()
+       (cond ((ps:chain init-adserver-set) nil)
+	     (t
+	      (setf (ps:chain pbjs init-adserver-set) t)
+	      (ps:chain googletag cmd (push (lambda ()
+					      (cond ((ps:chain pbjs lib-loaded)
+						     (ps:chain pbjs que (push (lambda ()
+										(ps:chain pbjs (set-targeting-for-g-p-t-async))
+										(ps:chain googletag (pubads) (refresh))))))
+						    (t
+						     (ps:chain googletag (pubads) (refresh))))))))))
+     (set-timeout (lambda () (init-adserver)) *prebid_timeout*)
+     (ps:chain googletag cmd (push (lambda ()
+				     (ps:chain googletag (define-slot "/19968336/header-bid-tag-1" sizes "div-1") (add-service (ps:chain googletag (pubads))))
+				     (ps:chain googletag (pubads) (enable-single-request))
+				     (ps:chain googletag (enable-services)))))
+     (alert "foo"))))
+
+; (clouseau:inspect (ps:ps* '(alert "bar")))
+
+(define-easy-handler (cl-prebid :uri "/foo" :acceptor-names '(normal-acceptor))
+    ()
+  "Landing test page"
+  (with-html-output-to-string (*standard-output* nil :prologue t)
+    (:html
+     (:head
+      (:title "LICENSED TITLE")
+      (:base :href "/")
+      (:script :type "text/javascript" :src "https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js")
+      (:script :type "text/javascript" :src "https://securepubads.g.doubleclick.net/tag/js/gpt.js")
+      (:script :type "text/javascript" (if *licensedp* nil (cl-who:str *js*)))
+      ;; (:style (str com.symsim.utils::*font-face-style-css-string*))
+      ;; (:style (str com.symsim.utils::*use-custom-font-style-string*))
+      )
+     (:body
+      (:div
+       :id "div-1" :style "min-height:250px"
+       (:a "licensed div-1"))
+      (:div
+       :id "div-2" :style "min-height:250px"
+       (:a "licensed div-2"))))))
 
 (define-easy-handler (test-bidder-native-example :uri "/test-bidder-native-example" :acceptor-names '(normal-acceptor))
     ()
@@ -545,28 +513,74 @@ console.log(iframe.contentDocument);
   )
 
 ;;
+;; Error condition pages
 ;;
+;; Should probably also be moved to com.symsim.utils
 ;;
 
-(define-easy-handler (cl-prebid :uri "/foo" :acceptor-names '(normal-acceptor))
+(defun simple-error-page (error-condition-var)
+  (let ((msg #+NIL (apply
+		    'format
+		    nil
+		    (simple-condition-format-control error-condition-var)
+		    (simple-condition-format-arguments error-condition-var))
+	     #-NIL (with-standard-io-syntax (format nil "~a" error-condition-var))))
+    (log:error msg)
+    (with-html-output-to-string (*standard-output* nil :prologue t)
+      (:html
+       (head-of-page "404: Not Found" *standard-output*)
+       (:body
+	(:h1 "404: Not Found")
+	(:h2 "Simple-Error Condition Message")
+	(:p (str msg))
+	(:h2 "Details of Request that Elicited the Error")
+	(info-table
+	 (headers-in       *request*)
+	 (request-method   *request*)
+	 (request-uri      *request*)
+	 (server-protocol  *request*)
+	 (local-addr       *request*)
+	 (local-port       *request*)
+	 (remote-addr      *request*)
+	 (remote-port      *request*)
+	 (hunchentoot::content-stream   *request*)
+	 (cookies-in       *request*)
+	 (get-parameters   *request*)
+	 (post-parameters  *request*)
+	 (script-name      *request*)
+	 (query-string     *request*))))
+      (setf (return-code*) +http-not-found+)
+      nil)))
+
+;;
+;; The landing page for the CL-PREBID stuff.
+;;
+
+(define-easy-handler (landing-page :uri "/" :acceptor-names '(normal-acceptor))
     ()
   "Landing test page"
   (with-html-output-to-string (*standard-output* nil :prologue t)
     (:html
      (:head
-      (:title "LICENSED TITLE")
+      (:title "Landing Page")
       (:base :href "/")
-      (:script :type "text/javascript" :src "https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js")
-      (:script :type "text/javascript" :src "https://securepubads.g.doubleclick.net/tag/js/gpt.js")
-      (:script :type "text/javascript" (if *licensedp* nil (cl-who:str *js*)))
-      ;; (:style (str com.symsim.utils::*font-face-style-css-string*))
-      ;; (:style (str com.symsim.utils::*use-custom-font-style-string*))
+      (:script (str (cl-prebid::slurp-javascript-file "prebid10.2.0.js")))
       )
      (:body
       (:div
-       :id "div-1" :style "min-height:250px"
-       (:a "licensed div-1"))
-      (:div
-       :id "div-2" :style "min-height:250px"
-       (:a "licensed div-2"))))))
+       :id "div-0" :style "min-height:250px"
+       (:p (:a "landing page div-0"))
+       (:p (:a :href "./test-bidder-banner-example" (:b "testBidderBannerExample")))
+       (:p (:a :href "./test-bidder-banner-example2" (:b "testBidderBannerExample 2")))
+       (:p (:a :href "./foo" (:b "foo")))
+       (:p (:a :href "./test-bidder-native-example" (:b "testBidderNativeExample")))
+       (:p (:a :href "./test-bidder-video-example" (:b "testBidderVideoExample")))
+       )))))
+
+
+;;
+;;
+;;
+
+
 
