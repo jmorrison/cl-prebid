@@ -1,14 +1,16 @@
 ;;; -*- Mode: LISP; Syntax: Ansi-Common-Lisp; Base: 10; Package: cl-user; -*- 
 
 ;;;
-;;; Copyright Symbolic Simulation, LLC, 2012.
+;;; Copyright Symbolic Simulation, LLC, 2025.
 ;;; 
 ;;; License "Golden Rule License"
 ;;;
 ;;; First   (load "cl-prebid.asd")
-;;; then    (asdf:oos 'asdf:load-op :cl-prebid)
-;;; finally (cl-prebid:run)
+;;; then    (asdf:oos 'asdf:load-op :cl-prebid/*)
+;;; finally (cl-prebid/*:run)
 ;;;
+
+(declaim (optimize (speed 0) (safety 3) (debug 3)))
 
 (defpackage #:cl-prebid.asd
   (:use #:cl #:asdf)
@@ -77,3 +79,40 @@
 		      (provide "cl-prebid/hunchentoot") ; string designator
 		      (format t "~&;; try (cl-prebid/hunchentoot:run)~%")))
 
+(defsystem #:cl-prebid/weblocks
+    :name "cl-prebid/weblocks"
+    :version "0.0.1"
+    :maintainer "jm@symbolic-simulation.com"
+    :author "jm@symbolic-simulation.com"
+    :license "Golden Rule License"
+    :description "cl-prebid for weblocks Web Server"
+    :depends-on (#:cl-prebid
+		 #:cl-who
+		 #:weblocks
+		 )
+    :components ((:file "package-weblocks")
+		 (:file "cl-prebid-weblocks" :depends-on ("package-weblocks")))
+    :perform (load-op :after (op c)
+		      (provide "cl-prebid/weblocks") ; string designator
+		      (format t "~&;; try (cl-prebid/weblocks:run)~%")))
+
+(defsystem #:cl-prebid/reblocks
+    :name "cl-prebid/reblocks"
+    :version "0.0.1"
+    :maintainer "jm@symbolic-simulation.com"
+    :author "jm@symbolic-simulation.com"
+    :license "Golden Rule License"
+    :description "cl-prebid for reblocks Web Server"
+    :depends-on (#:cl-prebid
+		 #:cl-who
+		 #:reblocks
+		 #:reblocks-ui-examples
+		 #:reblocks-navigation-widget
+		 #:reblocks-file-server
+		 )
+    :components ((:file "package-reblocks")
+;		 (:file "/home/jm/quicklisp/dists/quicklisp/software/reblocks-20241012-git/examples/simple-form")
+		 (:file "cl-prebid-reblocks" :depends-on ("package-reblocks")))
+    :perform (load-op :after (op c)
+		      (provide "cl-prebid/reblocks") ; string designator
+		      (format t "~&;; try (cl-prebid/reblocks:run)~%")))

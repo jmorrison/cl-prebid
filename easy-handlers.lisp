@@ -9,7 +9,7 @@
 (eval-when (:compile-toplevel)
 	   (setf cl-who::*downcase-tokens-p* NIL))
 
-(defvar *licensedp* nil)
+(defvar *licensedp* t)
 
 ;;
 ;; Banner test
@@ -22,16 +22,15 @@
    (setf (ps:chain pbjs que) (or (ps:chain pbjs que) (array)))
    (defparameter ad-unit-code "adUnitCode-0000")
 
-   (defparameter ad-units (array
-			   (ps:create media-types
-				      (ps:create banner (ps:create sizes (array 600 500)))
-				      code ad-unit-code
-				      bids (array (ps:create bidder "testBidder"
-							     params (ps:create)))
-				      )
-			   )
-     )
-   (defun foo (bid) ((ps:chain console log) "foo: " bid) bid)
+   (defparameter
+       ad-units
+     (array
+      (ps:create
+       media-types (ps:create banner (ps:create sizes (array 600 500)))
+       code ad-unit-code
+       bids (array (ps:create bidder "testBidder" params (ps:create))))))
+   (defun foo (bid)
+     ((ps:chain console log) "foo: " bid) bid)
    (ps:chain pbjs que (push (lambda ()
 			      (ps:chain pbjs (register-bid-adapter
 					      nil
@@ -55,11 +54,7 @@
 										       (iframe (ps:chain document (create-element "iframe"))))
 										  (ps:chain div (append-child iframe))
 										  (let ((iframe-doc (ps:chain iframe content-window document)))
-										    (ps:chain pbjs (render-ad iframe-doc (ps:chain winning-bid ad-id))))))))))
-			    )
-	     )
-   )
- )
+										    (ps:chain pbjs (render-ad iframe-doc (ps:chain winning-bid ad-id))))))))))))))
 
 ;; (ps:ps* *test-bidder-banner-ps*)
 
@@ -143,111 +138,62 @@ console.log(pbjs);
     (:html
      (:head
       (:title "testBidderBannerExample")
-      ;; (:script (str (cl-prebid::slurp-javascript-file "Prebid.js/build/dist/prebid.js")))
       (:script (str (cl-prebid::slurp-javascript-file "prebid10.2.0.js")))
-      )
+      (:script (str (ps:ps* *test-bidder-banner-ps*))))
      (:body
       (:div
        :id "banner")
       (:div
        (:p (:a "pa1"))
-       (:p (:a "pa2")))
-      (:script
-       #+NIL (str *test-bidder-banner-js*)
-       #-NIL (str (ps:ps* *test-bidder-banner-ps*))
-       )))
-    )
-  )
+       (:p (:a "pa2")))))))
 
 (define-easy-handler (test-bidder-banner-example2 :uri "/test-bidder-banner-example2" :acceptor-names '(normal-acceptor))
     ()
-  "testBidderBannerExample 2"
+  "testBidderBannerExample2"
   (with-html-output-to-string (*standard-output* nil :prologue t)
     (:html
      (:head
-      (:title "testBidderBannerExample")
-      ;; (:script (str (cl-prebid::slurp-javascript-file "Prebid.js/build/dist/prebid.js")))
+      (:title "testBidderBannerExample2")
       (:script (str (cl-prebid::slurp-javascript-file "prebid10.2.0.js")))
-      (:script
-       "
-            var pbjs = pbjs || {};
-            pbjs.que = pbjs.que || [];
-
-            const adUnitCode = 'adUnit-0000';
-
-            const adUnits = [{
-                mediaTypes: {
-                    banner: {
-                        sizes: [600, 500]
-                    }
-                },
-                code: adUnitCode,
-                bids: [
-                    {bidder: 'testBidder', params: {}}
-                ]
-            }]
-
-            pbjs.que.push(function () {
-
-                /**
-                 * BID RESPONSE SIMULATION SECTION START
-                 *
-                 * This section handles simulating a bidder
-                 * that will always respond with bid responses.
-                 *
-                 * This part should not be present in production.
-                 */
-                pbjs.registerBidAdapter(null, 'testBidder', {
-                    supportedMediaTypes: ['banner', 'video', 'native'],
-                    isBidRequestValid: () => true
-                });
-
-                pbjs.setConfig({
-                    debugging: {
-                        enabled: true,
-                        intercept: [
-                            {
-                                when: {
-                                    bidder: 'testBidder',
-                                },
-                                then: {
-                                    creativeId: 'testCreativeId',
-                                }
-                            }
-                        ]
-                    }
-                });
-                /**
-                 * BID RESPONSE SIMULATION SECTION END
-                 */
-
-                pbjs.addAdUnits(adUnits);
-                pbjs.requestBids({
-                    adUnitCodes: [adUnitCode],
-                    bidsBackHandler: function() {
-                        const bids = pbjs.getHighestCpmBids(adUnitCode);
-                        const winningBid = bids[0];
-                        const div = document.getElementById('banner');
-                        let iframe = document.createElement('iframe');
-                        iframe.frameBorder = '0';
-                        div.appendChild(iframe);
-                        var iframeDoc = iframe.contentWindow.document;
-                        pbjs.renderAd(iframeDoc, winningBid.adId);
-                    }
-                });
-            });
-")
-      )
+      (:script (str (ps:ps* *test-bidder-banner-ps*))))
      (:body
       (:div
        :id "banner")
       (:div
-       (:p (:a "pa1"))
-       (:p (:a "pa2")))
-      )
-     )
-    )
+       :id "debugging"
+       (:p (:a (fmt "*licensedp*: ~s" *licensedp*))))
+      (:div
+       :id "regular body")
+      (:p (:a "pa1"))
+      (:p (:a "pa2"))))))
+
+(defun fake-licensed-p ()
+  (format t "fake-license-check~%")
+  #+NIL t
+  #-NIL nil
   )
+
+(define-easy-handler (test-bidder-banner-example3 :uri "/test-bidder-banner-example3" :acceptor-names '(normal-acceptor))
+    ()
+  "testBidderBannerExample3"
+  (let ((licensed-p (funcall #'fake-licensed-p)))
+    (format t "protected-page - ~s~%" licensed-p)
+    (with-html-output-to-string (*standard-output* nil :prologue t)
+      (:html
+       (:head
+	(:title "testBidderBannerExample3")
+	(unless licensed-p
+	  (htm (:script (str (cl-prebid::slurp-javascript-file "prebid10.2.0.js"))))
+	  (htm (:script (str (ps:ps* *test-bidder-banner-ps*))))))
+       (:body
+	(unless licensed-p (htm (:div :id "banner")))
+	(:div
+	 :id "debugging"
+	 (:p (:a (fmt "licensed-p: ~s" licensed-p))))
+	(:div
+	 :id "regular body")
+	(:p (:a "pa1"))
+	(:p (:a "pa2")))))))
 
 ;;
 ;; Native test
@@ -290,6 +236,7 @@ console.log(pbjs);
 
 ; (clouseau:inspect (ps:ps* '(alert "bar")))
 
+#+NIL
 (define-easy-handler (cl-prebid :uri "/foo" :acceptor-names '(normal-acceptor))
     ()
   "Landing test page"
@@ -571,11 +518,11 @@ console.log(iframe.contentDocument);
        :id "div-0" :style "min-height:250px"
        (:p (:a "landing page div-0"))
        (:p (:a :href "./test-bidder-banner-example" (:b "testBidderBannerExample")))
-       (:p (:a :href "./test-bidder-banner-example2" (:b "testBidderBannerExample 2")))
-       (:p (:a :href "./foo" (:b "foo")))
+       (:p (:a :href "./test-bidder-banner-example2" (:b "testBidderBannerExample2")))
+       (:p (:a :href "./test-bidder-banner-example3" (:b "testBidderBannerExample3")))
        (:p (:a :href "./test-bidder-native-example" (:b "testBidderNativeExample")))
-       (:p (:a :href "./test-bidder-video-example" (:b "testBidderVideoExample")))
-       )))))
+       (:p (:a :href "./foo" (:b "foo")))
+       (:p (:a :href "./test-bidder-video-example" (:b "testBidderVideoExample"))))))))
 
 
 ;;
