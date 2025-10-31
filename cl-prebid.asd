@@ -105,10 +105,14 @@
     :description "cl-prebid for reblocks Web Server"
     :depends-on (#:cl-prebid
 		 #:cl-who
-		 #:reblocks
-		 #:reblocks-ui-examples
-		 #:reblocks-navigation-widget
-		 #:reblocks-file-server
+		 ;; #:reblocks
+		 ;; #:reblocks-ui-examples
+		 #:reblocks-ui2
+		 ;; #:reblocks-ui2-demo
+		 #:reblocks-ui2-tailwind
+		 ;; #:reblocks-navigation-widget
+		 ;; #:reblocks-file-server
+		 :clouseau
 		 )
     :components ((:file "package-reblocks")
 ;		 (:file "/home/jm/quicklisp/dists/quicklisp/software/reblocks-20241012-git/examples/simple-form")

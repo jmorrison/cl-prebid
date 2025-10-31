@@ -1,0 +1,16 @@
+{
+  "version": "10.2.0",
+  "modules": [
+    "consentManagementGpp",
+    "consentManagementTcf",
+    "gppControl_usnat",
+    "gppControl_usstates",
+    "gptPreAuction",
+    "storageControl",
+    "tcfControl",
+    "dfpAdpod",
+    "express",
+    "dfpAdServerVideo",
+    "pairIdSystem"
+  ]
+}

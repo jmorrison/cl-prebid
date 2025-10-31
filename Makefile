@@ -59,4 +59,19 @@ test-cl-prebid2: $(PREBID_JS)
 #
 
 test-reblocks:
-	sbcl --eval "(ql:quickload '(:cl-prebid/reblocks))" --eval "(reblocks-examples/simple-form::start)"
+	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
+	sbcl --eval "(ql:quickload '(:cl-prebid/reblocks))" --eval "(todo::start)"
+
+#+NIL
+#(defvar *prebid-dep* (make-dependency
+#	       "./Prebid.js/dist/not-for-prod/prebid.js"
+#	       :system :reblocks
+#	       :cache-in-memory t
+#	       )
+#  )
+
+test-reblocks2:
+	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
+	sbcl \
+         --eval "(ql:quickload '(:40ants-routes :40ants-logging :reblocks-ui2 :reblocks-ui2-demo))" \
+         --eval "(reblocks-ui2-demo/server:start)"
