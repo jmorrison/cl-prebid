@@ -6,6 +6,18 @@
 
 (in-package :cl-prebid/weblocks)
 
+(defun init-user-session (root)
+  (setf
+   (widget-children root)
+   (make-navigation
+    "CL-Prebid"
+    (list "Banner" (make-widget "banner") "_Banner")
+    (list "Native" (make-widget "native") "_Native")
+    (list "Video" (make-widget "video") "_Video")
+    )
+   )
+  )
+
 (defwebapp cl-prebid-weblocks
     :name "CL-Prebid-Weblocks"
     :prefix "/cl-prebid-weblocks"
@@ -17,14 +29,14 @@
     :js-backend :jquery
     :dependencies
     (list
-      (make-instance 'script-dependency
-		     :url (make-instance 'puri:uri
-					 :path "/geoblackboard/pub/scripts/jquery-1.8.2.js")
-		     :local-path "./assets/jquery-1.8.2/jquery-1.8.2.js")
-      (make-instance 'script-dependency
-		     :url (make-instance 'puri:uri
-					 :path "/geoblackboard/pub/scripts/jquery-1.8.2.js")
-		     :local-path "./assets/jquery-1.8.2/jquery-1.8.2.js")))
+     (make-instance 'script-dependency
+		    :url (make-instance 'puri:uri
+					:path "/geoblackboard/pub/scripts/jquery-1.8.2.js")
+		    :local-path "./assets/jquery-1.8.2/jquery-1.8.2.js")
+     (make-instance 'script-dependency
+		    :url (make-instance 'puri:uri
+					:path "/geoblackboard/pub/scripts/jquery-1.8.2.js")
+		    :local-path "./assets/jquery-1.8.2/jquery-1.8.2.js")))
 
 (defmethod initialize-instance :after ((self cl-prebid-weblocks) &rest args)
   #+NIL (setf (public-files-uri-prefix self) (concatenate
@@ -34,19 +46,20 @@
 
   (when (log:debug)
     (format t "initialize-instance ~a" self)
-  self)
+    self)
+  )
 
 (defmethod initialize-webapp :after ((self cl-prebid-weblocks))
   (format t "initialize-webapp~%")
   self)
 
 (defmethod render-page-headers :before ((self cl-prebid-weblocks))
-  (clouseau:inspect (list 3 self))
+  #+NIL (clouseau:inspect (list 3 self))
   #+NIL (clouseau:inspect weblocks:*current-page-headers*)
   #+NIL (clouseau:inspect *weblocks-server*)
   #-NIL (pushnew
 	 (lambda (&rest args)
-	   (clouseau:inspect (list :foobar args))
+	   #+NIL (clouseau:inspect (list :foobar args))
 	   (list "<base href=\"foobar\">"))
 	 weblocks:*current-page-headers*)
   #+NIL (setf *current-page-headers* '(:base "/foobar"))
