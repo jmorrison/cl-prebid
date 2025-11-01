@@ -105,6 +105,7 @@
     :description "cl-prebid for reblocks Web Server"
     :depends-on (#:cl-prebid
 		 #:cl-who
+		 #:clack-handler-hunchentoot
 		 ;; #:reblocks
 		 ;; #:reblocks-ui-examples
 		 #:reblocks-ui2

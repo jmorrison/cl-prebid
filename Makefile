@@ -48,11 +48,19 @@ test-prebid: $(PREBID_JS)
 # Here are the various Common Lisp web server prebid tests
 #
 
+#
+# http://localhost:4242/
+#
+
 test-cl-prebid: $(PREBID_JS)
 	sbcl --eval "(ql:quickload '(:weblocks :cxml :cl-prebid/hunchentoot))" --eval '(cl-prebid/hunchentoot::run)'
 
+#
+# http://localhost:8080/cl-prebid-weblocks
+#
+
 test-cl-prebid2: $(PREBID_JS)
-	sbcl --eval "(ql:quickload '(:weblocks :cxml :cl-prebid/hunchentoot))" --eval '(cl-prebid/weblocks::run)'
+	sbcl --eval "(ql:quickload '(:weblocks :cl-prebid/hunchentoot))" --eval '(cl-prebid/weblocks::run)'
 
 #
 # Don't think I'll worry much about this right now
