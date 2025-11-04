@@ -52,21 +52,21 @@ test-prebid: $(PREBID_JS)
 # http://localhost:4242/
 #
 
-test-cl-prebid: $(PREBID_JS)
+test-hunchentoot: # $(PREBID_JS)
 	sbcl --eval "(ql:quickload '(:weblocks :cxml :cl-prebid/hunchentoot))" --eval '(cl-prebid/hunchentoot::run)'
 
 #
 # http://localhost:8080/cl-prebid-weblocks
 #
 
-test-cl-prebid2: $(PREBID_JS)
-	sbcl --eval "(ql:quickload '(:weblocks :cl-prebid/hunchentoot))" --eval '(cl-prebid/weblocks::run)'
+test-weblocks: # $(PREBID_JS)
+	sbcl --eval "(ql:quickload '(:cl-prebid/weblocks))" --eval '(cl-prebid/weblocks::run)'
 
 #
 # Don't think I'll worry much about this right now
 #
 
-test-reblocks:
+test-reblocks: # $(PREBID_JS)
 	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
 	sbcl --eval "(ql:quickload '(:cl-prebid/reblocks))" --eval "(todo::start)"
 
@@ -78,8 +78,8 @@ test-reblocks:
 #	       )
 #  )
 
-test-reblocks2:
-	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
+test-reblocks-demo: # $(PREBID_JS)
+#	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
 	sbcl \
-         --eval "(ql:quickload '(:40ants-routes :40ants-logging :reblocks-ui2 :reblocks-ui2-demo))" \
+         --eval "(ql:quickload '(:clack-handler-hunchentoot :40ants-routes :40ants-logging :reblocks-ui2 :reblocks-ui2-demo))" \
          --eval "(reblocks-ui2-demo/server:start)"
