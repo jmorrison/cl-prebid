@@ -71,15 +71,31 @@
 		 :content widget))
 
 ;;;;
-;;;;
+;;;; Pages
 ;;;;
 
 
-(reblocks/app:defapp my-app
-    :prefix "/my-app"
-    :subclasses (reblocks-ui2-demo/app::app)
-    :routes ((reblocks/routes:page ("/foo" :name "foo") (reblocks-ui2-demo/pages/form::make-form-page)))
-    )
+(defwidget a-string-widget (ui-widget)
+  ((content :accessor content :initarg :content :initform "")))
+
+(defmethod render ((widget a-string-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (with-html ()
+    (:div :class "text-2xl my-8" (content widget))))
+
+;;;;
+;;;; App
+;;;;
+
+(defapp my-app
+    :prefix "/"
+    :routes ((page ("/" :name "root") (make-instance 'a-string-widget :content "ROOT"))
+	     (page ("/one" :name "foo") (make-instance 'a-string-widget :content "ONE"))
+	     (page ("/two" :name "two") (make-instance 'a-string-widget :content "TWO"))))
+
+;;;;
+;;;; Plumbing
+;;;;
+
 
 (defun start (&rest args
 	      &key
@@ -94,17 +110,17 @@
   (setf reblocks/variables:*pages-expire-in* (* 10 60))
   (setf reblocks/variables:*max-pages-per-session* 10)
 
-  (setf reblocks-ui2/themes/api::*current-theme*
+  (setf *current-theme*
         (reblocks-ui2/themes/tailwind:make-tailwind-theme))
 
-  #+NIL
+  #-NIL
   (reblocks/server:start :port port
 			 :interface interface
-                         :apps #+NIL 'reblocks-ui2-demo/app::app #-NIL 'my-app
+                         :apps 'my-app
                          :server-type server-type
                          :request-timeout request-timeout
                          :debug debug)
 
-  #-NIL
+  #+NIL
   (apply 'reblocks-ui2-demo/server::start args)
   )
