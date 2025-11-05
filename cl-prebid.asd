@@ -106,11 +106,9 @@
     :depends-on (#:cl-prebid
 		 #:cl-who
 		 #:clack-handler-hunchentoot
-		 ;; #:reblocks
-		 ;; #:reblocks-ui-examples
-		 #:reblocks-ui2
-		 ;; #:reblocks-ui2-demo
-		 #:reblocks-ui2-tailwind
+		 ;; #:reblocks-ui2
+		 ;; #:reblocks-ui2-tailwind
+		 #:reblocks-ui2-demo
 		 ;; #:reblocks-navigation-widget
 		 ;; #:reblocks-file-server
 		 :clouseau
