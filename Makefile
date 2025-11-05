@@ -23,17 +23,15 @@ GULP_COMMAND=serve-prod
 #
 
 PREBID_TAG=10.4.0
-PREBID_JS=Prebid.js/build/dev/prebid.js
+PREBID_JS_DIR=Prebid.js
+PREBID_JS=$(PREBID_JS_DIR)/dist/not-for-prod/prebid.js
 PREBID_MODULES=--modules=openxBidAdapter,rubiconBidAdapter,sovrnBidAdapter
 
-$(PREBID_JS): 
+$(PREBID_JS_DIR): 
 	git clone --branch $(PREBID_TAG) https://github.com/prebid/Prebid.js.git
-	. ${NVM_DIR}/nvm.sh ; nvm install $(NVM_VERSION) ; nvm use $(NVM_VERSION) ; pushd Prebid.js ; npm ci $(NPM_OPTIONS) ; ./node_modules/gulp/bin/gulp.js build $(PREBID_MODULES)
 
-#$(PREBID_JS): Prebid.js
-#	( . ${NVM_DIR}/nvm.sh ; nvm install $(NVM_VERSION) )
-#	( . ${NVM_DIR}/nvm.sh ; nvm use $(NVM_VERSION) )
-#	( pushd Prebid.js && . ${NVM_DIR}/nvm.sh && npm ci ) # Does not quite work right
+$(PREBID_JS): $(PREBID_JS_DIR)
+	. ${NVM_DIR}/nvm.sh ; nvm install $(NVM_VERSION) ; nvm use $(NVM_VERSION) ; pushd Prebid.js ; npm ci $(NPM_OPTIONS) ; ./node_modules/gulp/bin/gulp.js build $(PREBID_MODULES)
 
 #
 # Testing targets
@@ -68,7 +66,7 @@ test-weblocks: # $(PREBID_JS)
 
 test-reblocks: # $(PREBID_JS)
 	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
-	sbcl --eval "(ql:quickload '(:cl-prebid/reblocks))" --eval "(todo::start)"
+	sbcl --eval "(ql:quickload '(:cl-prebid/reblocks))" --eval "(cl-prebid/reblocks::start)"
 
 #+NIL
 #(defvar *prebid-dep* (make-dependency
