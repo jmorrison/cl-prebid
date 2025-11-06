@@ -8,6 +8,19 @@
 (in-package #:cl-prebid/reblocks)
 
 ;;
+;; This binds the STRING values of the various HTML parameters (in lowercase)
+;;
+
+(defmacro reblocks-request-params (lambda-list &body body)
+  (let ((temp-var (gensym)))
+    `(let ((,temp-var (reblocks/request:get-parameters)))
+       #+NIL (clouseau:inspect ,temp-var)
+       (let ,(loop for var in lambda-list
+		   for i from 0
+		   collect `(,var (aget ,temp-var ,(string-downcase (symbol-name var)))))
+	 ,@body))))
+
+;;
 ;; (reblocks/preview:preview (make-instance 'todo::cl-prebid-container))
 ;;
 
@@ -79,8 +92,13 @@
   ((content :accessor content :initarg :content :initform "")))
 
 (defmethod render ((widget a-string-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  (with-html ()
-    (:div :class "text-2xl my-8" (content widget))))
+  (reblocks-request-params (foo baz frob)
+		     (with-html ()
+		       (:div :class "text-2xl my-8"
+			     (:p (content widget))
+			     (:p (format nil "foo ~s" foo))
+			     (:p (format nil "baz ~s" baz))
+			     (:p (format nil "looking up frob ~s" frob))))))
 
 ;;;;
 ;;;; App

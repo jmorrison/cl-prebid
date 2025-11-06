@@ -7,6 +7,7 @@
 (defpackage #:cl-prebid/reblocks
   (:use
    :cl
+   :assoc-utils
    :cl-prebid
    :cl-who
    :cl-fad
@@ -17,6 +18,8 @@
                 #:make-js-action)
   (:import-from #:reblocks/app
                 #:defapp)
+  (:import-from #:reblocks/request
+		#:get-parameters)
   (:import-from #:reblocks/html
                 #:with-html)
   (:import-from #:reblocks/routes

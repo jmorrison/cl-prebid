@@ -111,7 +111,8 @@
 		 #:reblocks-ui2-demo
 		 ;; #:reblocks-navigation-widget
 		 ;; #:reblocks-file-server
-		 :clouseau
+		 #:assoc-utils		; The fukamachi one, which changes order of arguments
+		 #:clouseau
 		 )
     :components ((:file "package-reblocks")
 ;		 (:file "/home/jm/quicklisp/dists/quicklisp/software/reblocks-20241012-git/examples/simple-form")
