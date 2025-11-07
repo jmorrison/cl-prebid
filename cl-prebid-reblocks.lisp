@@ -52,7 +52,7 @@
 
 ;; https://40ants.com/reblocks/dependencies/#x-28REBLOCKS-2FDOC-2FDEPENDENCIES-3A-3A-40DEPENDENCIES-2040ANTS-DOC-2FLOCATIVES-3ASECTION-29
 
-#+NIL
+#-NIL
 (defmethod reblocks-ui2/widget:get-dependencies ((widget cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   #+NIL (clouseau:inspect (list widget theme))
   (list*
@@ -70,6 +70,13 @@
     #P"./Prebid.js/dist/not-for-prod/prebid.js"
     :system :cl-prebid
     :type :js
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   (reblocks/dependencies:make-dependency
+    #P"./my-tailwind/output.css"
+    :system :cl-prebid
+    :type :css
     :crossorigin "anonymous"
     ;; :cache-in-memory t
     )
@@ -91,6 +98,30 @@
 (defwidget a-string-widget (ui-widget)
   ((content :accessor content :initarg :content :initform "")))
 
+#+NIL
+(defmethod get-dependencies ((widget ui-widget) (theme tailwind-theme))
+  (list*
+   (make-dependency
+     "https://cdn.tailwindcss.com/3.3.5"
+     ;; Old URLs:
+     ;; "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"
+     ;; "https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"
+     :type :js)
+   (call-next-method)))
+
+
+#+NIL
+(defmethod get-dependencies ((widget a-string-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (list*
+   (make-dependency "./my-tailwind/output.css")
+   #+NIL (call-next-method)))
+
+#-NIL
+(defmethod get-dependencies ((widget reblocks-ui2/widget:ui-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (list*
+   (make-dependency "./my-tailwind/output.css")
+   #+NIL (call-next-method)))
+
 (defmethod render ((widget a-string-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   (reblocks-request-params (foo baz frob)
 		     (with-html ()
@@ -106,6 +137,7 @@
 
 (defapp my-app
     :prefix "/"
+    :page-constructor #'wrap-with-frame
     :routes ((page ("/" :name "root") (make-instance 'a-string-widget :content "ROOT"))
 	     (page ("/one" :name "foo") (make-instance 'a-string-widget :content "ONE"))
 	     (page ("/two" :name "two") (make-instance 'a-string-widget :content "TWO"))))

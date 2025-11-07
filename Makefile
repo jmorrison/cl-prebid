@@ -34,6 +34,18 @@ $(PREBID_JS): $(PREBID_JS_DIR)
 	. ${NVM_DIR}/nvm.sh ; nvm install $(NVM_VERSION) ; nvm use $(NVM_VERSION) ; pushd Prebid.js ; npm ci $(NPM_OPTIONS) ; ./node_modules/gulp/bin/gulp.js build $(PREBID_MODULES)
 
 #
+# Build tailwindcss
+#
+
+TW_DIR=my-tailwind
+
+$(TW_DIR)/tailwind.config.js: $(TW_DIR)/node_modules
+	( pushd $(TW_DIR) ; . ~/.nvm/nvm.sh && npm install -D )
+
+$(TW_DIR)/output.css: $(TW_DIR)/node_modules
+	( pushd $(TW_DIR) ; . ~/.nvm/nvm.sh && npm run build )
+
+#
 # Testing targets
 #
 
