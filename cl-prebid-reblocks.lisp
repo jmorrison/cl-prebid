@@ -7,6 +7,26 @@
 
 (in-package #:cl-prebid/reblocks)
 
+#|
+(trace REBLOCKS-UI2/WIDGET:GET-DEPENDENCIES)
+(trace REBLOCKS/DEPENDENCIES:GET-DEPENDENCIES)
+(trace REBLOCKS-UI2/CONTAINERS/TABS/THEMES/TAILWIND::GET-DEPENDENCIES)
+(trace CL-PREBID/REBLOCKS::GET-DEPENDENCIES)
+|#
+
+#+NIL
+(defmethod reblocks-ui2/themes/tailwind::get-dependencies ((widget reblocks-ui2/widget:ui-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (clouseau:inspect (list :get-dependencies 00 widget theme))
+  (list*
+   (reblocks/dependencies:make-dependency
+    #P"./my-tailwind/output.css.00000000"
+    :system :cl-prebid
+    :type :css
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   (call-next-method)))
+
 ;;
 ;; This binds the STRING values of the various HTML parameters (in lowercase)
 ;;
@@ -35,12 +55,13 @@
     :initform nil)))
 
 (defmethod reblocks-ui2/widget:render ((cpc cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
+  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
   (with-html ()
     (:div :id "banner"
 	  :class "banner"
 	  (:h1 :class "text-2xl my-8" "cbc h1")
 	  (:a "banner text"))
+    (:div :class "text-8xl text-gray-500 dar:text-gray-400" (:a "FOOO"))
     (:div :content
 	  (reblocks-ui2/widget:render (content cpc) theme))
     (:div :id "bodystuff"
@@ -54,7 +75,7 @@
 
 #-NIL
 (defmethod reblocks-ui2/widget:get-dependencies ((widget cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list widget theme))
+  #-NIL (clouseau:inspect (list :get-dependencies widget theme))
   (list*
    (reblocks-lass:make-dependency
     '(.banner
@@ -80,7 +101,7 @@
     :crossorigin "anonymous"
     ;; :cache-in-memory t
     )
-   (call-next-method)))
+   (call-next-method))) ; Otherwise a remote CDN dependency upon tailwind
 
 ;;;;;; Application
 
@@ -99,28 +120,51 @@
   ((content :accessor content :initarg :content :initform "")))
 
 #+NIL
-(defmethod get-dependencies ((widget ui-widget) (theme tailwind-theme))
+(defmethod reblocks-ui2/widget:get-dependencies ((widget a-string-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (clouseau:inspect (list 1 :get-dependencies :a-string-widget widget theme))
   (list*
-   (make-dependency
-     "https://cdn.tailwindcss.com/3.3.5"
+   (reblocks/dependencies:make-dependency
+    #P"./my-tailwind/output.css"
+    :system :cl-prebid
+    :type :css
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   (call-next-method)))
+
+;;
+;; If I don't define THIS method, then the CDN version of tailwind will be fetched!
+;;
+
+#-NIL
+(defmethod reblocks-ui2/widget:get-dependencies ((widget reblocks-ui2/widget:ui-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (clouseau:inspect (list :get-dependencies :reblocks-ui2/ui-widget widget theme))
+  (list*
+   (reblocks/dependencies:make-dependency
+    #P"./my-tailwind/output.css"
+    :system :cl-prebid
+    :type :css
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   (call-next-method)))
+
+;;
+;; This should block the built-in hard-coded CDN fetch of tailwind
+;;
+
+#+NIL
+(defmethod reblocks-ui2/widget:get-dependencies ((widget reblocks-ui2/widget:ui-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (clouseau:inspect (list :get-dependencies :reblocks-ui2/ui-widget widget theme))
+  (list*
+   (reblocks/dependencies:make-dependency
+     "https://cdn.tailwindcss.com/3.3.5/FOOOOOOOOOOOO"
      ;; Old URLs:
      ;; "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"
      ;; "https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"
      :type :js)
    (call-next-method)))
 
-
-#+NIL
-(defmethod get-dependencies ((widget a-string-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  (list*
-   (make-dependency "./my-tailwind/output.css")
-   #+NIL (call-next-method)))
-
-#-NIL
-(defmethod get-dependencies ((widget reblocks-ui2/widget:ui-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  (list*
-   (make-dependency "./my-tailwind/output.css")
-   #+NIL (call-next-method)))
 
 (defmethod render ((widget a-string-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   (reblocks-request-params (foo baz frob)
