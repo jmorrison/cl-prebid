@@ -3,9 +3,7 @@ module.exports = {
   darkMode: false, // or 'media' or 'class'
     content: [
 	'../*reblocks*',
-	'~/quicklisp/dists/ultralisp/software/40ants-*/*',
-	'~/quicklisp/dists/ultralisp/software/40ants-*/*/*',
-	'~/quicklisp/dists/ultralisp/software/40ants-*/*/*/*',
+	'~/quicklisp/dists/ultralisp/software/40ants-*/**/*',
     ],
   theme: {
     extend: {},
