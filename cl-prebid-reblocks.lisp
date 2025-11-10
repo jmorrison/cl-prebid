@@ -7,6 +7,9 @@
 
 (in-package #:cl-prebid/reblocks)
 
+(trace REBLOCKS-FILE-SERVER/CORE::FILE-SERVER-HANDLER :break nil)
+(trace (method reblocks-ui2/widget:render (reblocks-file-server/core::file-widget reblocks-ui2/themes/tailwind::tailwind-theme)) :break nil)
+
 ;;
 ;; Kludge to prevent dependency on CDN-delivered tailwind.
 ;;
@@ -96,6 +99,8 @@
   #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
   (with-html ()
 
+    (:div :id "foobar" (:img :src "/pub/image/full-logo.png" :alt "full-logo.png"))
+
     ;; These are styled with our locally-built, enormously
     ;; over-inclusive tailwind css file
 
@@ -150,6 +155,14 @@
     :crossorigin "anonymous"
     ;; :cache-in-memory t
     )
+   #+NIL
+   (reblocks/dependencies:make-dependency
+    #P"./images/full-logo.png"
+    :system :cl-prebid
+    :type :png
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
    (call-next-method))) ; Otherwise a remote CDN dependency upon tailwind
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -178,11 +191,47 @@
 
 (defapp my-app
     :prefix "/"
-    :page-constructor #'wrap-with-frame
+    ;; :page-constructor #'wrap-with-frame
     :routes ((page ("/" :name "root") (make-instance 'a-string-widget :content "ROOT"))
 	     (page ("/one" :name "foo") (make-instance 'a-string-widget :content "ONE"))
-	     (page ("/two" :name "two") (make-instance 'a-string-widget :content "TWO"))))
+	     (page ("/two" :name "two") (make-instance 'a-string-widget :content "TWO"))
+	     (page ("/three" :name "three") (make-instance 'cl-prebid-container :content (make-instance 'a-string-widget :content "THREE")))
+	     (reblocks/routes:static-file
+	      "/favicon.ico"
+	      (asdf:system-relative-pathname :cl-prebid "pub/image/favicon.ico"))
+	     (40ants-routes/defroutes:get ("/pub3/<int:id>" :name "article")
+					  (progn
+					    (clouseau:inspect (list :id id reblocks/session::*env*))
+					    (format t "Handler for article with ID ~D was called." id)))
+	     (40ants-routes/defroutes:get ("/pub4/<string:fname>" :name "article")
+					  (progn
+					    (clouseau:inspect (list :fname fname reblocks/session::*env*))
+					    (format t "Handler for article with FNAME ~S was called." fname)
+					    (list 200
+						  (list :content-type "image/png")
+						  (asdf:system-relative-pathname :cl-prebid/reblocks "./pub/image/full-logo.png"))))
+	     (40ants-routes/defroutes:get ("/image/<int:id>" :name "article")
+					  (progn
+					    (clouseau:inspect (list :id id reblocks/page::*current-page*))
+					    (format t "Handler for article with ID ~D was called." id)))
+	     (reblocks-file-server/core:file-server 
+	      "/pub/"
+	      :name "pub"
+	      :root (asdf:system-relative-pathname
+		     :cl-prebid
+		     (make-pathname :directory '(:relative "pub"))))
+	     #+NIL (make-instance
+		    '40ants-routes/defroutes::route-class
+		    :root (asdf:system-relative-pathname
+			   :cl-prebid
+			   (make-pathname :directory '(:relative "pub")))
+		    :handler #'(lambda (&key path) (clouseau:inspect path) nil)
+		    :dir-listing nil)
+	     #+NIL (reblocks-file-server:make-route :uri "/static/" :root "./pub/images/" :filter "*.png")
+	     )
+    )
 
+#+NIL
 (defmethod reblocks/dependencies:get-dependencies ((app my-app))
   (clouseau:inspect app)
   (list*
