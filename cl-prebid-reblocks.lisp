@@ -169,6 +169,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
+;;;; Navigation
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(reblocks-navigation-widget:defroutes top-level-navigation
+    ("/" (make-instance 'a-string-widget :content "ROOT"))
+  ("/one" (make-instance 'a-string-widget :content "ONE"))
+  ("/two" (make-instance 'a-string-widget :content "TWO")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
 ;;;; Application
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -189,11 +204,83 @@
 ;;;; App
 ;;;;
 
+#-NIL
+(defmacro pub-subdir-route (subdir name mimetype)
+  "Make a route for a pub subdirectory"
+  `(40ants-routes/defroutes:get (,(format nil "/pub/~a/<string:fname>" subdir) :name ,name)
+				(progn
+				  (format *terminal-io* "============================= ./pub/~a/~a~%" ,subdir fname)
+				  (list 200
+					(list :content-type ,mimetype)
+					(asdf:system-relative-pathname
+					 :cl-prebid/reblocks
+					 (format nil "./pub/~a/~a" ,subdir fname))))))
+
+#+NIL
+(defmacro pub-subdir-route (subdir name mimetype)
+  "Make a route for a pub subdirectory"
+  '(40ants-routes/defroutes:get ("/pub/images/<string:fname>" :name "images")
+				(progn
+				  (format *terminal-io* "============================= ./pub/~a/~a~%" "images" fname)
+				  (list 200
+					(list :content-type "image/png")
+					(asdf:system-relative-pathname
+					 :cl-prebid/reblocks
+					 "./pub/images/SymbolicSimulationLLC.png")))))
+
 (defapp my-app
     :prefix "/"
     ;; :page-constructor #'wrap-with-frame
-    :routes ((page ("/" :name "root") (make-instance 'a-string-widget :content "ROOT"))
+    :routes (
+	     (pub-subdir-route "css"     "css"     "text/css")
+	     (pub-subdir-route "fonts"   "fonts"  "font/otf")
+	     (pub-subdir-route "images"  "images" "image/png")
+	     (pub-subdir-route "js"      "js"     "application/javascript")
+
+#|
+	     (40ants-routes/defroutes:get ("/pub/css/<string:fname>" :name "css")
+					  (progn
+					    (clouseau:inspect (list :css :fname fname reblocks/session::*env*))
+					    (format t "Handler for css with FNAME ~S was called." fname)
+					    (list 200
+						  (list :content-type "text/css")
+						  (asdf:system-relative-pathname
+						   :cl-prebid/reblocks
+						   (format nil "./pub/css/~a" fname)))))
+	     (40ants-routes/defroutes:get ("/pub/fonts/<string:fname>" :name "fonts")
+					  (progn
+					    (clouseau:inspect (list :font :fname fname reblocks/session::*env*))
+					    (format t "Handler for font with FNAME ~S was called." fname)
+					    (list 200
+						  (list :content-type "font/otf")
+						  (asdf:system-relative-pathname
+						   :cl-prebid/reblocks
+						   (format nil "./pub/font/~a" fname)))))
+	     (40ants-routes/defroutes:get ("/pub/images/<string:fname>" :name "images")
+					  (progn
+					    (clouseau:inspect (list :fname fname reblocks/session::*env*))
+					    (format t "Handler for image with FNAME ~S was called." fname)
+					    (list 200
+						  (list :content-type "image/png")
+						  (asdf:system-relative-pathname
+						   :cl-prebid/reblocks
+						   (format nil "./pub/images/~a" fname)))))
+	     (40ants-routes/defroutes:get ("/pub/js/<string:fname>" :name "js")
+					  (progn
+					    (clouseau:inspect (list :fname fname reblocks/session::*env*))
+					    (format t "Handler for js with FNAME ~S was called." fname)
+					    (list 200
+						  (list :content-type "application/javascript")
+						  (asdf:system-relative-pathname
+						   :cl-prebid/reblocks
+						   (format nil "./pub/js/~a" fname)))))
+|#
+
+
+	     (page ("/nav" :name "nav") (make-top-level-navigation))
 	     (page ("/one" :name "foo") (make-instance 'a-string-widget :content "ONE"))
+#|
+	     (page ("/" :name "root") (make-instance 'a-string-widget :content "ROOT"))
 	     (page ("/two" :name "two") (make-instance 'a-string-widget :content "TWO"))
 	     (page ("/three" :name "three") (make-instance 'cl-prebid-container :content (make-instance 'a-string-widget :content "THREE")))
 	     (reblocks/routes:static-file
@@ -203,17 +290,7 @@
 					  (progn
 					    (clouseau:inspect (list :id id reblocks/session::*env*))
 					    (format t "Handler for article with ID ~D was called." id)))
-	     (40ants-routes/defroutes:get ("/pub4/<string:fname>" :name "article")
-					  (progn
-					    (clouseau:inspect (list :fname fname reblocks/session::*env*))
-					    (format t "Handler for article with FNAME ~S was called." fname)
-					    (list 200
-						  (list :content-type "image/png")
-						  (asdf:system-relative-pathname :cl-prebid/reblocks "./pub/image/full-logo.png"))))
-	     (40ants-routes/defroutes:get ("/image/<int:id>" :name "article")
-					  (progn
-					    (clouseau:inspect (list :id id reblocks/page::*current-page*))
-					    (format t "Handler for article with ID ~D was called." id)))
+
 	     (reblocks-file-server/core:file-server 
 	      "/pub/"
 	      :name "pub"
@@ -228,6 +305,7 @@
 		    :handler #'(lambda (&key path) (clouseau:inspect path) nil)
 		    :dir-listing nil)
 	     #+NIL (reblocks-file-server:make-route :uri "/static/" :root "./pub/images/" :filter "*.png")
+|#
 	     )
     )
 
