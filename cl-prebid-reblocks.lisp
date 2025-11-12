@@ -75,6 +75,44 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
+;;;; cl-prebid widgets
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defwidget prebid-banner-widget (ui-widget)
+  ())
+
+(defmethod render ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
+  (with-html ()
+    (:div :id "foobar" (:img :src "/pub/images/full-logo.png" :alt "full-logo.png"))))
+
+(defmethod reblocks-ui2/widget:get-dependencies ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  #+NIL (clouseau:inspect (list :get-dependencies widget theme))
+  (list
+   (reblocks/dependencies:make-dependency
+    #P"./Prebid.js/dist/not-for-prod/prebid.js"
+    :system :cl-prebid
+    :type :js
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   (reblocks/dependencies:make-dependency
+    #P"./pub/js/prebid-banner.js"
+    :system :cl-prebid
+    :type :js
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   )
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
 ;;;; A prebid container widget (page wrap, really)
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -219,40 +257,36 @@
     :prefix "/"
     ;; :page-constructor #'wrap-with-frame
     :routes (
+	     (reblocks/routes:static-file
+	      "/favicon.ico"
+	      (asdf:system-relative-pathname :cl-prebid "pub/images/favicon.ico"))
+
 	     (pub-subdir-route "css"     "css"     "text/css")
 	     (pub-subdir-route "fonts"   "fonts"  "font/otf")
 	     (pub-subdir-route "images"  "images" "image/png")
 	     (pub-subdir-route "js"      "js"     "application/javascript")
 
+	     (reblocks-file-server/core:file-server 
+	      "/files/"
+	      :name "files"
+	      :root (asdf:system-relative-pathname
+		     :cl-prebid
+		     (make-pathname :directory '(:relative "pub"))))
+
 	     #+NIL (page ("/nav" :name "nav") (make-top-level-navigation))
 
-	     (page ("/one" :name "foo") (make-instance 'a-string-widget :content "ONE"))
-#|
 	     (page ("/" :name "root") (make-instance 'a-string-widget :content "ROOT"))
+	     (page ("/one" :name "foo") (make-instance 'a-string-widget :content "ONE"))
 	     (page ("/two" :name "two") (make-instance 'a-string-widget :content "TWO"))
-	     (page ("/three" :name "three") (make-instance 'cl-prebid-container :content (make-instance 'a-string-widget :content "THREE")))
-	     (reblocks/routes:static-file
-	      "/favicon.ico"
-	      (asdf:system-relative-pathname :cl-prebid "pub/image/favicon.ico"))
+	     #-NIL (page ("/three" :name "three") (make-instance 'cl-prebid-container :content (make-instance 'a-string-widget :content "THREE")))
+	     #+NIL (page ("/three" :name "three") (make-instance 'a-string-widget :content "THREE"))
+
+	     (page ("/banner" :name "banner") (make-instance 'prebid-banner-widget))
+#|
 	     (40ants-routes/defroutes:get ("/pub3/<int:id>" :name "article")
 					  (progn
 					    (clouseau:inspect (list :id id reblocks/session::*env*))
 					    (format t "Handler for article with ID ~D was called." id)))
-
-	     (reblocks-file-server/core:file-server 
-	      "/pub/"
-	      :name "pub"
-	      :root (asdf:system-relative-pathname
-		     :cl-prebid
-		     (make-pathname :directory '(:relative "pub"))))
-	     #+NIL (make-instance
-		    '40ants-routes/defroutes::route-class
-		    :root (asdf:system-relative-pathname
-			   :cl-prebid
-			   (make-pathname :directory '(:relative "pub")))
-		    :handler #'(lambda (&key path) (clouseau:inspect path) nil)
-		    :dir-listing nil)
-	     #+NIL (reblocks-file-server:make-route :uri "/static/" :root "./pub/images/" :filter "*.png")
 |#
 	     )
     )

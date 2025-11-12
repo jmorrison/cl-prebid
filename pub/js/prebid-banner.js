@@ -1,0 +1,67 @@
+console.log(pbjs);
+var pbjs = pbjs || {};
+pbjs.que = pbjs.que || [];
+
+const adUnitCode = 'adUnit-0000';
+
+const adUnits = [{
+    mediaTypes: {
+        banner: {
+            sizes: [600, 500]
+        }
+    },
+    code: adUnitCode,
+    bids: [
+        {bidder: 'testBidder', params: {}}
+    ]
+}]
+
+pbjs.que.push(function () {
+
+    /**
+     * BID RESPONSE SIMULATION SECTION START
+     *
+     * This section handles simulating a bidder
+     * that will always respond with bid responses.
+     *
+     * This part should not be present in production.
+     */
+    pbjs.registerBidAdapter(null, 'testBidder', {
+        supportedMediaTypes: ['banner', 'video', 'native'],
+        isBidRequestValid: () => true
+    });
+
+    pbjs.setConfig({
+        debugging: {
+            enabled: true,
+            intercept: [
+                {
+                    when: {
+                        bidder: 'testBidder',
+                    },
+                    then: {
+                        creativeId: 'testCreativeId',
+                    }
+                }
+            ]
+        }
+    });
+    /**
+     * BID RESPONSE SIMULATION SECTION END
+     */
+
+    pbjs.addAdUnits(adUnits);
+    pbjs.requestBids({
+        adUnitCodes: [adUnitCode],
+        bidsBackHandler: function() {
+            const bids = pbjs.getHighestCpmBids(adUnitCode);
+            const winningBid = bids[0];
+            const div = document.getElementById('banner');
+            let iframe = document.createElement('iframe');
+            iframe.frameBorder = '0';
+            div.appendChild(iframe);
+            var iframeDoc = iframe.contentWindow.document;
+            pbjs.renderAd(iframeDoc, winningBid.adId);
+        }
+    });
+});
