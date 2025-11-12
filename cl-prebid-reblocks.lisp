@@ -82,12 +82,52 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defwidget prebid-banner-widget (ui-widget)
-  ())
+  ((div-id :accessor div-id :initform (symbol-name (gensym "prebid-banner")))))
 
 (defmethod render ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
   (with-html ()
-    (:div :id "foobar" (:img :src "/pub/images/full-logo.png" :alt "full-logo.png"))))
+    (:script (:raw "alert('HI');"))
+    (:script (:raw (ps:ps*
+		    `(let ()
+		      (setf pbjs (or pbjs (ps:create)))
+		      (setf (ps:chain pbjs que) (or (ps:chain pbjs que) (array)))
+		      (defparameter ad-unit-code "adUnitCode-0000")
+
+		      (defparameter
+			  ad-units
+			(array
+			 (ps:create
+			  media-types (ps:create banner (ps:create sizes (array 600 500)))
+			  code ad-unit-code
+			  bids (array (ps:create bidder "testBidder" params (ps:create))))))
+		      (defun foo (bid)
+			((ps:chain console log) "foo: " bid) bid)
+		      (ps:chain pbjs que (push (lambda ()
+						 (ps:chain pbjs (register-bid-adapter
+								 nil
+								 "testBidder"
+								 (ps:create
+								  supported-media-types (array "banner" "video" "native")
+								  is-bid-request-valid (lambda (bid) t))))
+						 (ps:chain pbjs (set-config (ps:create
+									     debugging (ps:create enabled t
+												  intercept (array (ps:create
+														    when (ps:create bidder "testBidder")
+														    then (ps:create creative-id "testCreativeId")))))))
+						 ;; Bid Response Simulation Section End
+						 (ps:chain pbjs (add-ad-units ad-units))
+						 (ps:chain pbjs (request-bids (ps:create
+									       add-unit-codes (array ad-unit-code)
+									       bids-back-handler (lambda ()
+												   (let* ((bids (ps:chain pbjs (get-highest-cpm-bids ad-unit-code)))
+													  (winning-bid (aref bids 0))
+													  (div (ps:chain document (get-element-by-id #+NIL "foobar" #-NIL ,(div-id widget))))
+													  (iframe (ps:chain document (create-element "iframe"))))
+												     (ps:chain div (append-child iframe))
+												     (let ((iframe-doc (ps:chain iframe content-window document)))
+												       (ps:chain pbjs (render-ad iframe-doc (ps:chain winning-bid ad-id))))))))))))))))
+    (:div :id #+NIL "foobar" #-NIL (div-id widget))))
 
 (defmethod reblocks-ui2/widget:get-dependencies ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   #+NIL (clouseau:inspect (list :get-dependencies widget theme))
@@ -99,6 +139,7 @@
     :crossorigin "anonymous"
     ;; :cache-in-memory t
     )
+   #+NIL
    (reblocks/dependencies:make-dependency
     #P"./pub/js/prebid-banner.js"
     :system :cl-prebid
