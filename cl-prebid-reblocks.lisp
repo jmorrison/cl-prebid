@@ -77,9 +77,16 @@
 ;;;;
 ;;;; cl-prebid widgets
 ;;;;
+;;;; We commented-out the static JS file, and use Parenscript to
+;;;; compile dynamically.
+;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
+;; The banner widget
+;;
 
 (defwidget prebid-banner-widget (ui-widget)
   ((div-id :accessor div-id :initform (symbol-name (gensym "prebid-banner")))))
@@ -87,50 +94,53 @@
 (defmethod render ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
   (with-html ()
-    (:script (:raw "alert('HI');"))
-    (:script (:raw (ps:ps*
-		    `(let ()
-		      (setf pbjs (or pbjs (ps:create)))
-		      (setf (ps:chain pbjs que) (or (ps:chain pbjs que) (array)))
-		      (defparameter ad-unit-code "adUnitCode-0000")
+    #+NIL (:script (:raw "alert('prebid-banner-widget');"))
+    #-NIL
+    (:script
+     (:raw
+      (ps:ps*
+       `(let ()
+	  (setf pbjs (or pbjs (ps:create)))
+	  (setf (ps:chain pbjs que) (or (ps:chain pbjs que) (array)))
+	  (defparameter ad-unit-code "adUnitCode-0000")
 
-		      (defparameter
-			  ad-units
-			(array
-			 (ps:create
-			  media-types (ps:create banner (ps:create sizes (array 600 500)))
-			  code ad-unit-code
-			  bids (array (ps:create bidder "testBidder" params (ps:create))))))
-		      (defun foo (bid)
-			((ps:chain console log) "foo: " bid) bid)
-		      (ps:chain pbjs que (push (lambda ()
-						 (ps:chain pbjs (register-bid-adapter
-								 nil
-								 "testBidder"
-								 (ps:create
-								  supported-media-types (array "banner" "video" "native")
-								  is-bid-request-valid (lambda (bid) t))))
-						 (ps:chain pbjs (set-config (ps:create
-									     debugging (ps:create enabled t
-												  intercept (array (ps:create
-														    when (ps:create bidder "testBidder")
-														    then (ps:create creative-id "testCreativeId")))))))
-						 ;; Bid Response Simulation Section End
-						 (ps:chain pbjs (add-ad-units ad-units))
-						 (ps:chain pbjs (request-bids (ps:create
-									       add-unit-codes (array ad-unit-code)
-									       bids-back-handler (lambda ()
-												   (let* ((bids (ps:chain pbjs (get-highest-cpm-bids ad-unit-code)))
-													  (winning-bid (aref bids 0))
-													  (div (ps:chain document (get-element-by-id #+NIL "foobar" #-NIL ,(div-id widget))))
-													  (iframe (ps:chain document (create-element "iframe"))))
-												     (ps:chain div (append-child iframe))
-												     (let ((iframe-doc (ps:chain iframe content-window document)))
-												       (ps:chain pbjs (render-ad iframe-doc (ps:chain winning-bid ad-id))))))))))))))))
+	  (defparameter
+	      ad-units
+	    (array
+	     (ps:create
+	      media-types (ps:create banner (ps:create sizes (array 600 500)))
+	      code ad-unit-code
+	      bids (array (ps:create bidder "testBidder" params (ps:create))))))
+	  (defun foo (bid)
+	    ((ps:chain console log) "foo: " bid) bid)
+	  (ps:chain pbjs que (push (lambda ()
+				     (ps:chain pbjs (register-bid-adapter
+						     nil
+						     "testBidder"
+						     (ps:create
+						      supported-media-types (array "banner" "video" "native")
+						      is-bid-request-valid (lambda (bid) t))))
+				     (ps:chain pbjs (set-config (ps:create
+								 debugging (ps:create enabled t
+										      intercept (array (ps:create
+													when (ps:create bidder "testBidder")
+													then (ps:create creative-id "testCreativeId")))))))
+				     ;; Bid Response Simulation Section End
+				     (ps:chain pbjs (add-ad-units ad-units))
+				     (ps:chain pbjs (request-bids (ps:create
+								   add-unit-codes (array ad-unit-code)
+								   bids-back-handler (lambda ()
+										       (let* ((bids (ps:chain pbjs (get-highest-cpm-bids ad-unit-code)))
+											      (winning-bid (aref bids 0))
+											      (div (ps:chain document (get-element-by-id #+NIL "foobar" #-NIL ,(div-id widget))))
+											      (iframe (ps:chain document (create-element "iframe"))))
+											 (ps:chain div (append-child iframe))
+											 (let ((iframe-doc (ps:chain iframe content-window document)))
+											   (ps:chain pbjs (render-ad iframe-doc (ps:chain winning-bid ad-id))))))))))))))))
     (:div :id #+NIL "foobar" #-NIL (div-id widget))))
 
 (defmethod reblocks-ui2/widget:get-dependencies ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :get-dependencies widget theme))
+  #+NIL (clouseau:inspect (list :get-dependencies :prebid-banner-widget widget theme))
   (list
    (reblocks/dependencies:make-dependency
     #P"./Prebid.js/dist/not-for-prod/prebid.js"
@@ -149,6 +159,89 @@
     )
    )
   )
+
+;;
+;; Native test
+;;
+
+(defwidget prebid-native-widget (ui-widget)
+  ((div-id :accessor div-id :initform (symbol-name (gensym "prebid-native")))))
+
+(defmethod render ((widget prebid-native-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render :prebid-native-widget cpc))
+  (with-html ()
+    #-NIL (:script (:raw "alert('prebid-native-widget');"))
+    #-NIL
+    (:script
+     (:raw
+      (ps:ps*
+       `(progn
+	  (defvar sizes '(300 200))
+	  (defvar *prebid_timeout* 700)
+	  (defvar ad-units (array (ps:create
+				   code "/19968336/header-bid-tag-1"
+				   media-types (ps:create banner (ps:create sizes sizes))
+				   bids (array (ps:create bidder "testBidder"
+							  params
+							  #-NIL (ps:create)
+							  #+NIL (ps:create placement-id "XXXXXXX"))))))
+	  (defvar googletag (or googletag (ps:create)))
+	  (setf (ps:chain googletag cmd) (or (ps:chain googletag cmd) (array)))
+	  (ps:chain googletag cmd (push (lambda () (ps:chain googletag (pubads) (disable-initial-load)))))
+	  (defvar pbjs (or pbjs (ps:create)))
+	  (setf (ps:chain pbjs que) (or (ps:chain pbjs que) (array)))
+	  (ps:chain pbjs que (push (lambda ()
+				     (ps:chain pbjs (add-ad-units ad-units))
+				     (ps:chain pbjs (request-bids (ps:create bids-back-handler init-adserver))))))
+	  (defun init-adserver ()
+	    (cond ((ps:chain pbjs init-adserver-set) nil)
+		  (t
+		   (setf (ps:chain pbjs init-adserver-set) t)
+		   (ps:chain googletag cmd (push (lambda ()
+						   (cond ((ps:chain pbjs lib-loaded)
+							  (ps:chain pbjs que (push (lambda ()
+										     (ps:chain pbjs (set-targeting-for-g-p-t-async))
+										     (ps:chain googletag (pubads) (refresh))))))
+							 (t
+							  (ps:chain googletag (pubads) (refresh))))))))))
+	  (set-timeout (lambda () (init-adserver)) *prebid_timeout*)
+	  (ps:chain googletag cmd (push (lambda ()
+					  (ps:chain googletag (define-slot "/19968336/header-bid-tag-1" sizes ,(div-id widget)) (add-service (ps:chain googletag (pubads))))
+					  (ps:chain googletag (pubads) (enable-single-request))
+					  (ps:chain googletag (enable-services)))))))))
+    (:div
+     :id (div-id widget)
+     :style "min-height:250px")
+    (:script
+     (:raw
+      (ps:ps*
+       `(ps:chain googletag cmd (push (lambda ()
+					(ps:chain googletag (display ,(div-id widget)))))))))))
+
+(defmethod reblocks-ui2/widget:get-dependencies ((widget prebid-native-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  #+NIL (clouseau:inspect (list :get-dependencies :prebid-banner-widget widget theme))
+  (list
+   (reblocks/dependencies:make-dependency
+    #P"./Prebid.js/dist/not-for-prod/prebid.js"
+    :system :cl-prebid
+    :type :js
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   #+NIL
+   (reblocks/dependencies:make-dependency
+    #P"./pub/js/prebid-banner.js"
+    :system :cl-prebid
+    :type :js
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   )
+  )
+
+;;
+;; Video test
+;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -323,6 +416,7 @@
 	     #+NIL (page ("/three" :name "three") (make-instance 'a-string-widget :content "THREE"))
 
 	     (page ("/banner" :name "banner") (make-instance 'prebid-banner-widget))
+	     (page ("/native" :name "native") (make-instance 'prebid-native-widget))
 #|
 	     (40ants-routes/defroutes:get ("/pub3/<int:id>" :name "article")
 					  (progn
