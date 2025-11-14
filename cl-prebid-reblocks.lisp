@@ -67,9 +67,9 @@
 		     (with-html ()
 		       (:div :class "text-2xl my-8" ; Reference tailwind style(s)
 			     (:p (content widget))
-			     (:p (format nil "foo ~s" foo))
-			     (:p (format nil "baz ~s" baz))
-			     (:p (format nil "looking up frob ~s" frob))))))
+			     (:p (format nil "param foo ~s" foo))
+			     (:p (format nil "param baz ~s" baz))
+			     (:p (format nil "param frob ~s" frob))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -89,7 +89,9 @@
 ;;
 
 (defwidget prebid-banner-widget (ui-widget)
-  ((div-id :accessor div-id :initform (symbol-name (gensym "prebid-banner")))))
+  ((div-id
+    :accessor div-id
+    :initform (symbol-name (gensym "prebid-banner")))))
 
 (defmethod render ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
@@ -137,7 +139,9 @@
 											 (ps:chain div (append-child iframe))
 											 (let ((iframe-doc (ps:chain iframe content-window document)))
 											   (ps:chain pbjs (render-ad iframe-doc (ps:chain winning-bid ad-id))))))))))))))))
-    (:div :id #+NIL "foobar" #-NIL (div-id widget))))
+    (:div
+     :id (div-id widget)
+     :class "flex justify-center")))
 
 (defmethod reblocks-ui2/widget:get-dependencies ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   #+NIL (clouseau:inspect (list :get-dependencies :prebid-banner-widget widget theme))
@@ -247,7 +251,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
-;;;; A prebid container widget (page wrap, really)
+;;;; A test widget
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -314,13 +318,6 @@
       :padding 10em
       :background-color "pink"))
    (reblocks/dependencies:make-dependency
-    #P"./Prebid.js/dist/not-for-prod/prebid.js"
-    :system :cl-prebid
-    :type :js
-    :crossorigin "anonymous"
-    ;; :cache-in-memory t
-    )
-   (reblocks/dependencies:make-dependency
     #P"./my-tailwind/output.css"
     :system :cl-prebid
     :type :css
@@ -357,21 +354,70 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
+;;;; Page wrapper
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defwidget page-frame-widget (reblocks-ui2/widget::ui-widget)
+  ((banner
+    :accessor banner
+    :initform (make-instance 'prebid-banner-widget))
+   (contnt-widget
+    :initarg :content
+    :reader content)))
+
+(defun wrap-with-frame (widget)
+  #+NIL (clouseau:inspect (list 1 widget))
+  (make-instance 'page-frame-widget
+		 :content widget))
+
+
+(defmethod render ((widget page-frame-widget) (theme t))
+  (reblocks/html:with-html ()
+    (:header
+     (banner widget)
+     (:div
+      :id "symsim-logo"
+      :class "flex justify-center"
+      (:img :src "/pub/images/SymbolicSimulationLLC.png" :alt "full-logo.png"))
+     #-NIL
+     (:div :class "navbar"
+	   (:div :class "main-logo"
+		 (:div :class "title text-4xl my-8 text-center text-stone-800 dark:text-stone-300"
+                       (:a :href "/"
+                           "Reblocks UI2 Demo App")))))
+    #-NIL
+    (:div :class "page-content w-1/2 mx-auto"
+          (content widget))
+    #-NIL
+    (:div :class "footer w-1/2 mx-auto my-4 text-slate-400"
+          (:p "Have a question?")
+          (:p "File an issue: "
+              (:a :class "text-blue-400"
+                  :href "https://github.com/40ants/reblocks-ui2"
+                  "https://github.com/40ants/reblocks-ui2")))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Pages
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
 ;;;; Application
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-#-NIL
-(defun wrap-with-frame (widget)
-  #+NIL (clouseau:inspect (list 1 widget))
-  (make-instance 'cl-prebid-container
-		 :content widget))
-
-;;;;
-;;;; Pages
-;;;;
 
 ;;;;
 ;;;; App
@@ -389,7 +435,7 @@
 					 (format nil "./pub/~a/~a" ,subdir fname))))))
 (defapp my-app
     :prefix "/"
-    ;; :page-constructor #'wrap-with-frame
+    :page-constructor #'wrap-with-frame
     :routes (
 	     (reblocks/routes:static-file
 	      "/favicon.ico"
@@ -405,7 +451,15 @@
 	      :name "files"
 	      :root (asdf:system-relative-pathname
 		     :cl-prebid
-		     (make-pathname :directory '(:relative "pub"))))
+		     #+NIL (make-pathname :directory '(:relative "pub"))
+		     (cl-fad:merge-pathnames-as-directory  (user-homedir-pathname) (make-pathname :directory '(:relative
+													       "dev"
+													       "workflow"
+													       "images"
+													       "podman-archives"
+													       "databases")))
+		     )
+	      )
 
 	     #+NIL (page ("/nav" :name "nav") (make-top-level-navigation))
 

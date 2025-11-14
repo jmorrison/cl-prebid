@@ -105,9 +105,11 @@
     :description "cl-prebid for reblocks Web Server"
     :depends-on (#:cl-prebid
 		 #:cl-who
+		 #:cl-fad
 		 #:clack-handler-hunchentoot
 		 ;; #:reblocks-ui2
 		 ;; #:reblocks-ui2-tailwind
+		 #:reblocks/widget
 		 #:reblocks-ui2-demo
 		 ;; #:reblocks-navigation-widget
 		 ;; #:reblocks-file-server
