@@ -96,8 +96,6 @@
 (defmethod render ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
   (with-html ()
-    #+NIL (:script (:raw "alert('prebid-banner-widget');"))
-    #-NIL
     (:script
      (:raw
       (ps:ps*
@@ -110,7 +108,17 @@
 	      ad-units
 	    (array
 	     (ps:create
-	      media-types (ps:create banner (ps:create sizes (array 600 500)))
+	      media-types (ps:create banner (ps:create
+					     sizes (array
+						    (array 600 500) ; The demo image
+						    (array 728 90)
+						    (array 200 250)
+						    (array 336 280)
+						    (array 320 50)
+						    (array 160 600)
+						    (array 300 600)
+						    (array 120 600)
+						    (array 970 250))))
 	      code ad-unit-code
 	      bids (array (ps:create bidder "testBidder" params (ps:create))))))
 	  (defun foo (bid)
@@ -134,14 +142,31 @@
 								   bids-back-handler (lambda ()
 										       (let* ((bids (ps:chain pbjs (get-highest-cpm-bids ad-unit-code)))
 											      (winning-bid (aref bids 0))
-											      (div (ps:chain document (get-element-by-id #+NIL "foobar" #-NIL ,(div-id widget))))
-											      (iframe (ps:chain document (create-element "iframe"))))
+											      (div (ps:chain document (get-element-by-id ,(div-id widget))))
+											      (iframe (ps:chain document (create-element "iframe"
+																	 (ps:create
+																	  scrolling "no"
+																	  |background-repeat| "no-repeat"
+																	  ;; width "100%"
+																	  ;; height "100%"
+																	  )))))
+											 (ps:chain iframe (set-attribute "scrolling" "no")) ; WORKS
+											 (ps:chain iframe (set-attribute "background-repeat" "no-repeat"))
+											 ((ps:@ console log) "iframe: " iframe)
 											 (ps:chain div (append-child iframe))
 											 (let ((iframe-doc (ps:chain iframe content-window document)))
-											   (ps:chain pbjs (render-ad iframe-doc (ps:chain winning-bid ad-id))))))))))))))))
+											   (ps:chain pbjs (render-ad iframe-doc (ps:chain winning-bid ad-id)))
+											   ((ps:@ console log) "content-document: " (ps:chain iframe content-document)))))))))))))))
     (:div
      :id (div-id widget)
-     :class "flex justify-center")))
+     :class
+     #+NIL "flex w-full justify-center overflow-hidden"
+     #+NIL "w-400 h-300 justify-center overflow-hidden"
+     #-NIL "flex justify-center overflow-hidden"
+     )
+    )
+  )
+
 
 (defmethod reblocks-ui2/widget:get-dependencies ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   #+NIL (clouseau:inspect (list :get-dependencies :prebid-banner-widget widget theme))
@@ -160,6 +185,15 @@
     :type :js
     :crossorigin "anonymous"
     ;; :cache-in-memory t
+    )
+   #-NIL
+   (reblocks-lass:make-dependency
+    '(.body
+      :scrollbar-width "none"
+      :background-repeat "no-repeat"
+      :background-size "cover"
+      :background-size "cover"
+      )
     )
    )
   )
@@ -275,7 +309,12 @@
   #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
   (with-html ()
 
-    (:div :id "foobar" (:img :src "/pub/image/full-logo.png" :alt "full-logo.png"))
+    (:div
+     :id "foobar"
+     (:a :href "http://www.symbolic-simulation.com"
+	 (:img
+	  :src "/pub/image/full-logo.png"
+	  :alt "full-logo.png")))
 
     ;; These are styled with our locally-built, enormously
     ;; over-inclusive tailwind css file
@@ -381,17 +420,51 @@
      (:div
       :id "symsim-logo"
       :class "flex justify-center"
-      (:img :src "/pub/images/SymbolicSimulationLLC.png" :alt "full-logo.png"))
-     #-NIL
+      (:a :href "http://www.symbolic-simulation.com"
+	  (:img :src "/pub/images/SymbolicSimulationLLC.png" :alt "full-logo.png")))
+
      (:div :class "navbar"
 	   (:div :class "main-logo"
 		 (:div :class "title text-4xl my-8 text-center text-stone-800 dark:text-stone-300"
                        (:a :href "/"
                            "Reblocks UI2 Demo App")))))
-    #-NIL
-    (:div :class "page-content w-1/2 mx-auto"
-          (content widget))
-    #-NIL
+
+    (:div :class "flex"
+          (let* ((menu-item-classes "text-xl py-2 px-4 shadow-lg hover:shadow-md rounded-r-xl border border-stone-200")
+                 (current-menu-item-classes (REBLOCKS-UI2/THEMES/STYLING:join-css-classes theme
+                                                              menu-item-classes
+                                                              (REBLOCKS-UI2/THEMES/TAILWIND::colors-bg-action theme)))
+                 (sections (append
+                            (sort (list '("button" "Button")
+                                        '("form" "Form")
+                                        '("text-input" "Text Input")
+                                        '("card" "Card")
+                                        '("containers" "Containers")
+                                        '("tabs" "Tabs"))
+                                  #'string<
+                                  :key #'car)
+                            (list
+                             #+NIL '("sources" "Sources" :path "")))))
+            (:ul :class "w-[200px] flex flex-col gap-4"
+                 (loop for (page-name title . route-args) in sections
+                       for full-path = (apply #'40ANTS-ROUTES/ROUTE-URL:route-url
+                                              page-name
+                                              ;; :namespace "server"
+                                              route-args)
+                       ;; Here we use starts-with, because for Sources
+                       ;; section there might be different URLs behind the prefix.
+                       for current = (str:starts-with-p full-path
+                                                        (reblocks/request:get-path))
+                       do (:li :class (if current
+                                          current-menu-item-classes
+                                          menu-item-classes)
+                               (:a :class "block text-right"
+                                   :href full-path
+                                   title)))))
+          
+          (:div :class "page-content w-1/2 mx-auto"
+                (content widget)))
+
     (:div :class "footer w-1/2 mx-auto my-4 text-slate-400"
           (:p "Have a question?")
           (:p "File an issue: "
@@ -460,6 +533,14 @@
 													       "databases")))
 		     )
 	      )
+
+	     (page ("/form" :name "form") (REBLOCKS-UI2-DEMO/PAGES/FORM::MAKE-FORM-PAGE))
+             (page ("/card" :name "card") (REBLOCKS-UI2-DEMO/PAGES/CARDS::MAKE-CARDS-PAGE))
+             (page ("/text-input" :name "text-input") (REBLOCKS-UI2-DEMO/PAGES/TEXT-INPUT::MAKE-TEXT-INPUT-PAGE))
+             (page ("/containers" :name "containers") (REBLOCKS-UI2-DEMO/PAGES/CONTAINERS::MAKE-CONTAINERS-PAGE))
+             (page ("/button" :name "button") (REBLOCKS-UI2-DEMO/PAGES/BUTTONS::MAKE-BUTTONS-PAGE))
+             (page ("/tabs" :name "tabs") (REBLOCKS-UI2-DEMO/PAGES/TABS::MAKE-TABS-PAGE))
+           
 
 	     #+NIL (page ("/nav" :name "nav") (make-top-level-navigation))
 
