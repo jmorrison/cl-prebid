@@ -156,14 +156,15 @@
 
      (:div :id "tailwind00" :class "mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white"
 	   (:a "tailwind00 text"))
-     (:div :id "header" (:h1 :class "text-2xl my-8" (:a "header text")))
-     (:div :id "foo" :class "text-8xl text-gray-500 dar:text-gray-400" (:a "FOOO"))
-     #-NIL (:div :id "Font test 1" :class "font-custom text-2xl" (:a "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
-     #-NIL (:div :id "Font test 2" :class "text-2xl" (:a "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
-     #-NIL (:div :id "Font test 3" :class "font-custom text-2xl" (:a "abcdefghijklmnopqrstuvwxyz"))
-     #-NIL (:div :id "Font test 4" :class "text-2xl" (:a "abcdefghijklmnopqrstuvwxyz"))
-     #-NIL (:div :id "Font test 6" :class "font-custom text-2xl" (:a "The quick brown fox jumps over the lazy dog"))
-     #-NIL (:div :id "Font test 6" :class "text-2xl" (:a "The quick brown fox jumps over the lazy dog"))
+     (:div :id "header" (:h1 :class "text-2xl my-8" (:a "text-2xl my-8")))
+     (:div :id "h1" "FOO" (:a "h1 text-2xl my-8"))
+     (:div :id "foo" :class "text-8xl text-gray-500 dar:text-gray-400" (:a "text-8xl text-gray-500 dar:text-gray-400"))
+     (:div :id "Font test 1" :class "font-custom text-2xl" (:a "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+     (:div :id "Font test 2" :class "text-2xl" (:a "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+     (:div :id "Font test 3" :class "font-custom text-2xl" (:a "abcdefghijklmnopqrstuvwxyz"))
+     (:div :id "Font test 4" :class "text-2xl" (:a "abcdefghijklmnopqrstuvwxyz"))
+     (:div :id "Font test 6" :class "font-custom text-2xl" (:a "The quick brown fox jumps over the lazy dog"))
+     (:div :id "Font test 6" :class "text-2xl" (:a "The quick brown fox jumps over the lazy dog"))
      )
     #+NIL (call-next-method)))
 
@@ -229,6 +230,10 @@
 ;;;;
 ;;;; We commented-out the static JS file, and use Parenscript to
 ;;;; compile dynamically.
+;;;;
+;;;; Might need a custom renderer to eliminate repeat-x
+;;;;
+;;;; https://docs.prebid.org/dev-docs/renderer.html
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -480,7 +485,9 @@
                             (sort (list
 				   #|
 				   '("button" "Button")
+				   |#
                                    '("form" "Form")
+				   #|
                                    '("text-input" "Text Input")
                                    '("card" "Card")
                                    '("containers" "Containers")
@@ -492,6 +499,7 @@
 				   '("tailwind-test-widget" "Tailwind Test Widget")
 				   '("reblocks-lass-test-widget" "Reblocks Lass Test Widget")
   				   '("cl-prebid-container" "CL Prebid Container")
+  				   '("postgis-login-form-page" "PostGIS Login Form Page")
 
   				   ;; '("css" "CSS")
   				   ;; '("fonts" "Fonts")
@@ -539,6 +547,88 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; PostGIS dialog/form
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defwidget postgis-login-form-page ()
+  ((submittedp :initform nil
+               :type boolean
+               :accessor submittedp)))
+
+
+(defun make-postgis-login-form-page ()
+  (make-instance 'postgis-login-form-page))
+
+(defmethod reblocks/widget:render ((widget postgis-login-form-page) #+NIL (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (with-html ()
+    (:h2 :class "text-xl my-4"
+         "Simple sign up form")
+    (cond
+      ((submittedp widget)
+       (render
+        (reblocks-ui2/form:form
+         (reblocks-ui2/containers/row:row (reblocks/widgets/string-widget:make-string-widget
+               "Thank you for submission!")
+              (button "Try again"
+                      :view :action))
+         :on-submit
+         (lambda (form)
+           (declare (ignore form))
+           (log:warn "Form reset was called")
+           (setf (submittedp widget)
+                 nil)
+           (update widget)))))
+      (t
+       (reblocks/widget:render
+        (reblocks-ui2/form:form
+         (reblocks-ui2/containers/column:column
+          (reblocks-ui2/containers/row:row
+           (reblocks-ui2/inputs/text-input:input :name "name"
+                  :placeholder "Name"
+                  :validator (reblocks-ui2/form/validators:valid-string)
+                  :size :xl)
+           (reblocks-ui2/inputs/text-input:input :name "email"
+                  :type :email
+                  :placeholder "Email"
+                  :size :xl))
+          (reblocks-ui2/containers/row:row
+           (reblocks-ui2/inputs/text-input:input :name "age"
+                  :placeholder "Age"
+                  :validator (reblocks-ui2/form/validators:valid-integer :min 18)
+                  :size :xl)
+           (reblocks-ui2/inputs/text-input:input :name "password"
+                  :type :password
+                  :validator
+                  (reblocks-ui2/form/validators:valid-password
+                   :min-length 8
+                   :required-symbols '((2 . "0123456789")
+                                       (1 . ",.@#$%^&*!"))
+                   :error "Password should be at least 8 symbols length and include 2 digits and 1 punctuation sign.")
+                  :size :xl
+                  :placeholder "Password"))
+          (reblocks-ui2/containers/controls-row:controls-row
+           (reblocks-ui2/buttons/button:button "Sign Up"
+                   :view :action)))
+         :on-submit
+         (lambda (reblocks-ui2/form:form &key name email age password)
+           (declare (ignore form))
+           (log:warn "On Submit was called:" name email age password)
+           (setf (submittedp widget)
+                 t)
+           (update widget))))))
+    #+NIL (call-next-method)))
+
+
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -612,6 +702,7 @@
 
   	     (page ("/banner" :name "banner") (make-instance 'prebid-banner-widget))
   	     (page ("/native" :name "native") (make-instance 'prebid-native-widget))
+	     (page ("/postgis-login-form-page" :name "postgis-login-form-page") (make-instance 'postgis-login-form-page))
   #|
 	     (40ants-routes/defroutes:get ("/pub3/<int:id>" :name "article")
 					  (progn
