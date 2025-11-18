@@ -53,16 +53,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
-;;;;; A string widget, styled with tailwind
+;;;; Test widgets
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defwidget a-string-widget (ui-widget)
+;;
+;; A simple string widget styled with tailwind
+;;
+
+(defwidget string-tailwind-test-widget (ui-widget)
   ((content :accessor content :initarg :content :initform "")))
 
-(defmethod render ((widget a-string-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod render ((widget string-tailwind-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
   (reblocks-request-params (foo baz frob)
 		     (with-html ()
 		       (:div :class "text-2xl my-8" ; Reference tailwind style(s)
@@ -70,6 +74,124 @@
 			     (:p (format nil "param foo ~s" foo))
 			     (:p (format nil "param baz ~s" baz))
 			     (:p (format nil "param frob ~s" frob))))))
+
+(defmethod reblocks-ui2/widget:get-dependencies ((widget string-tailwind-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (list*
+   (reblocks/dependencies:make-dependency
+    #P"./my-tailwind/output.css"
+    :system :cl-prebid
+    :type :css
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   (call-next-method)))
+
+;;
+;; A lass (inline) styling test widget
+;;
+
+(defwidget reblocks-lass-test-widget (reblocks-ui2/containers/column:column-widget)
+  ((reblocks-ui2/containers/container:subwidgets
+    :initform (list
+	       (reblocks/widgets/string-widget:make-string-widget "foo")
+	       (reblocks/widgets/string-widget:make-string-widget "bar")))))
+
+(defmethod reblocks-ui2/widget:render ((widget reblocks-lass-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (with-html ()
+    (:div :id "banner" :class "banner" (:a "banner text"))
+    (:div :id "bodystuff"
+	  :class "bodystuff"
+	  (:a "bodystuff text")
+	  (loop for item in (reblocks-ui2/containers/container:subwidgets widget) do
+		#+NIL (clouseau:inspect item)
+		(reblocks-ui2/widget:render item theme)))))
+
+(defmethod reblocks-ui2/widget:get-dependencies ((widget reblocks-lass-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (list*
+   (reblocks-lass:make-dependency
+    '(.banner
+      :border 20px solid "red"
+      :padding 10em
+      :background-color "blue"))
+   (reblocks-lass:make-dependency
+    '(.bodystuff
+      :border 20px solid "green"
+      :padding 10em
+      :background-color "pink"))
+   (reblocks/dependencies:make-dependency
+    #P"./my-tailwind/output.css"
+    :system :cl-prebid
+    :type :css
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   (call-next-method)))
+
+
+;;
+;; A container test widget
+;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; A test widget
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
+;; (reblocks/preview:preview (make-instance 'todo::cl-prebid-container))
+;;
+
+(defwidget cl-prebid-container (reblocks-ui2/containers/column:column-widget)
+  ((reblocks-ui2/containers/container:subwidgets
+    :initform (list
+	       (reblocks/widgets/string-widget:make-string-widget "foo")
+	       (reblocks/widgets/string-widget:make-string-widget "bar")))
+   (content
+    :initarg :content
+    :accessor content
+    :initform nil)))
+
+(defmethod reblocks-ui2/widget:render ((cpc cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
+  (with-html ()
+    (:div
+     :id "foobar"
+
+     ;; These are styled with our locally-built, enormously
+     ;; over-inclusive tailwind css file
+
+     (:div :id "tailwind00" :class "mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white"
+	   (:a "tailwind00 text"))
+     (:div :id "header" (:h1 :class "text-2xl my-8" (:a "header text")))
+     (:div :id "foo" :class "text-8xl text-gray-500 dar:text-gray-400" (:a "FOOO"))
+
+     ;; Here we render the contents of this container
+
+     (:div :content (reblocks-ui2/widget:render (content cpc) theme))
+     )
+    )
+  )
+
+;; https://40ants.com/reblocks/dependencies/#x-28REBLOCKS-2FDOC-2FDEPENDENCIES-3A-3A-40DEPENDENCIES-2040ANTS-DOC-2FLOCATIVES-3ASECTION-29
+
+#-NIL
+(defmethod reblocks-ui2/widget:get-dependencies ((widget cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  #+NIL (clouseau:inspect (list :get-dependencies widget theme))
+  (list*
+   (reblocks/dependencies:make-dependency
+    #P"./my-tailwind/output.css"
+    :system :cl-prebid
+    :type :css
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   (call-next-method))) ; Otherwise a remote CDN dependency upon tailwind
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -285,114 +407,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
-;;;; A test widget
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;
-;; (reblocks/preview:preview (make-instance 'todo::cl-prebid-container))
-;;
-
-(defwidget cl-prebid-container (reblocks-ui2/containers/column:column-widget)
-  ((reblocks-ui2/containers/container:subwidgets
-    :initform (list
-	       (reblocks/widgets/string-widget:make-string-widget "foo")
-	       (reblocks/widgets/string-widget:make-string-widget "bar")))
-   (content
-    :initarg :content
-    :accessor content
-    :initform nil)))
-
-(defmethod reblocks-ui2/widget:render ((cpc cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
-  (with-html ()
-
-    (:div
-     :id "foobar"
-     (:a :href "http://www.symbolic-simulation.com"
-	 (:img
-	  :src "/pub/image/full-logo.png"
-	  :alt "full-logo.png")))
-
-    ;; These are styled with our locally-built, enormously
-    ;; over-inclusive tailwind css file
-
-    (:div :id "tailwind00" :class "mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white"
-	  (:a "tailwind00 text"))
-    (:div :id "header" (:h1 :class "text-2xl my-8" (:a "header text")))
-    (:div :id "foo" :class "text-8xl text-gray-500 dar:text-gray-400" (:a "FOOO"))
-
-    ;; These are styled using the reblocks-lass defined in the following get-dependencies method
-
-    (:div :id "banner" :class "banner" (:a "banner text"))
-    (:div :id "bodystuff"
-	  :class "bodystuff"
-	  (:a "bodystuff text")
-	  (loop for item in (reblocks-ui2/containers/container:subwidgets cpc) do
-		#+NIL (clouseau:inspect item)
-		(reblocks-ui2/widget:render item theme)))
-
-    ;; Here we render the contents of this container
-
-    (:div :content (reblocks-ui2/widget:render (content cpc) theme))
-    )
-  )
-
-;; https://40ants.com/reblocks/dependencies/#x-28REBLOCKS-2FDOC-2FDEPENDENCIES-3A-3A-40DEPENDENCIES-2040ANTS-DOC-2FLOCATIVES-3ASECTION-29
-
-#-NIL
-(defmethod reblocks-ui2/widget:get-dependencies ((widget cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :get-dependencies widget theme))
-  (list*
-   (reblocks-lass:make-dependency
-    '(.banner
-      :border 20px solid "red"
-      :padding 10em
-      :background-color "blue"))
-   (reblocks-lass:make-dependency
-    '(.bodystuff
-      :border 20px solid "green"
-      :padding 10em
-      :background-color "pink"))
-   (reblocks/dependencies:make-dependency
-    #P"./my-tailwind/output.css"
-    :system :cl-prebid
-    :type :css
-    :crossorigin "anonymous"
-    ;; :cache-in-memory t
-    )
-   #+NIL
-   (reblocks/dependencies:make-dependency
-    #P"./images/full-logo.png"
-    :system :cl-prebid
-    :type :png
-    :crossorigin "anonymous"
-    ;; :cache-in-memory t
-    )
-   (call-next-method))) ; Otherwise a remote CDN dependency upon tailwind
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; Navigation
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-#+NIL
-(reblocks-navigation-widget:defroutes top-level-navigation
-    ("/" (make-instance 'a-string-widget :content "ROOT"))
-  ("/one" (make-instance 'a-string-widget :content "ONE"))
-  ("/two" (make-instance 'a-string-widget :content "TWO")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
 ;;;; Page wrapper
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -440,119 +454,133 @@
                                         '("text-input" "Text Input")
                                         '("card" "Card")
                                         '("containers" "Containers")
-                                        '("tabs" "Tabs"))
-                                  #'string<
-                                  :key #'car)
-                            (list
-                             #+NIL '("sources" "Sources" :path "")))))
-            (:ul :class "w-[200px] flex flex-col gap-4"
-                 (loop for (page-name title . route-args) in sections
-                       for full-path = (apply #'40ANTS-ROUTES/ROUTE-URL:route-url
-                                              page-name
-                                              ;; :namespace "server"
-                                              route-args)
-                       ;; Here we use starts-with, because for Sources
-                       ;; section there might be different URLs behind the prefix.
-                       for current = (str:starts-with-p full-path
-                                                        (reblocks/request:get-path))
-                       do (:li :class (if current
-                                          current-menu-item-classes
-                                          menu-item-classes)
-                               (:a :class "block text-right"
-                                   :href full-path
-                                   title)))))
-          
-          (:div :class "page-content w-1/2 mx-auto"
-                (content widget)))
+                                        '("tabs" "Tabs")
 
-    (:div :class "footer w-1/2 mx-auto my-4 text-slate-400"
-          (:p "Have a question?")
-          (:p "File an issue: "
-              (:a :class "text-blue-400"
-                  :href "https://github.com/40ants/reblocks-ui2"
-                  "https://github.com/40ants/reblocks-ui2")))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; Pages
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+					'("banner" "Banner")
+					'("string-tailwind-test-widget" "String Tailwind Test Widget")
+					'("reblocks-lass-test-widget" "Reblocks Lass Test Widget")
+  					'("cl-prebid-container" "CL Prebid Container")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; Application
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  					;; '("css" "CSS")
+  					;; '("fonts" "Fonts")
+  					;; '("images" "Images")
+  					;; '("js" "JavaScript")
 
-;;;;
-;;;; App
-;;;;
+  					)
+                                    #'string<
+                                    :key #'car)
+                              (list
+                               #+NIL '("sources" "Sources" :path "")))))
+              (:ul :class "w-[200px] flex flex-col gap-4"
+                   (loop for (page-name title . route-args) in sections
+                         for full-path = (apply #'40ANTS-ROUTES/ROUTE-URL:route-url
+                                                page-name
+                                                ;; :namespace "server"
+                                                route-args)
+                         ;; Here we use starts-with, because for Sources
+                         ;; section there might be different URLs behind the prefix.
+                         for current = (str:starts-with-p full-path
+                                                          (reblocks/request:get-path))
+                         do (:li :class (if current
+                                            current-menu-item-classes
+                                            menu-item-classes)
+                                 (:a :class "block text-right"
+                                     :href full-path
+                                     title)))))
+            
+            (:div :class "page-content w-1/2 mx-auto"
+                  (content widget)))
 
-(defmacro pub-subdir-route (subdir name mimetype)
-  "Make a route for a pub subdirectory"
-  `(40ants-routes/defroutes:get (,(format nil "/pub/~a/<string:fname>" subdir) :name ,name)
-				(progn
-				  (format *terminal-io* "============================= ./pub/~a/~a~%" ,subdir fname)
-				  (list 200
-					(list :content-type ,mimetype)
-					(asdf:system-relative-pathname
-					 :cl-prebid/reblocks
-					 (format nil "./pub/~a/~a" ,subdir fname))))))
-(defapp my-app
-    :prefix "/"
-    :page-constructor #'wrap-with-frame
-    :routes (
-	     (reblocks/routes:static-file
-	      "/favicon.ico"
-	      (asdf:system-relative-pathname :cl-prebid "pub/images/favicon.ico"))
+      (:div :class "footer w-1/2 mx-auto my-4 text-slate-400"
+            (:p "Have a question?")
+            (:p "File an issue: "
+                (:a :class "text-blue-400"
+                    :href "https://github.com/40ants/reblocks-ui2"
+                    "https://github.com/40ants/reblocks-ui2")))))
 
-	     (pub-subdir-route "css"     "css"     "text/css")
-	     (pub-subdir-route "fonts"   "fonts"  "font/otf")
-	     (pub-subdir-route "images"  "images" "image/png")
-	     (pub-subdir-route "js"      "js"     "application/javascript")
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;
+  ;;;; Pages
+  ;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	     (reblocks-file-server/core:file-server 
-	      "/files/"
-	      :name "files"
-	      :root (asdf:system-relative-pathname
-		     :cl-prebid
-		     #+NIL (make-pathname :directory '(:relative "pub"))
-		     (cl-fad:merge-pathnames-as-directory  (user-homedir-pathname) (make-pathname :directory '(:relative
-													       "dev"
-													       "workflow"
-													       "images"
-													       "podman-archives"
-													       "databases")))
-		     )
-	      )
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;
+  ;;;; Application
+  ;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-	     (page ("/form" :name "form") (REBLOCKS-UI2-DEMO/PAGES/FORM::MAKE-FORM-PAGE))
+  ;;;;
+  ;;;; App
+  ;;;;
+
+  (defmacro pub-subdir-route (subdir name mimetype)
+    "Make a route for a pub subdirectory"
+    `(40ants-routes/defroutes:get (,(format nil "/pub/~a/<string:fname>" subdir) :name ,name)
+  				(progn
+  				  (format *terminal-io* "============================= ./pub/~a/~a~%" ,subdir fname)
+  				  (list 200
+  					(list :content-type ,mimetype)
+  					(asdf:system-relative-pathname
+  					 :cl-prebid/reblocks
+  					 (format nil "./pub/~a/~a" ,subdir fname))))))
+  (defapp my-app
+      :prefix "/"
+      :page-constructor #'wrap-with-frame
+      :routes (
+  	     (reblocks/routes:static-file
+  	      "/favicon.ico"
+  	      (asdf:system-relative-pathname :cl-prebid "pub/images/favicon.ico"))
+
+  	     (pub-subdir-route "css"     "css"     "text/css")
+  	     (pub-subdir-route "fonts"   "fonts"  "font/otf")
+  	     (pub-subdir-route "images"  "images" "image/png")
+  	     (pub-subdir-route "js"      "js"     "application/javascript")
+
+  	     (reblocks-file-server/core:file-server 
+  	      "/files/"
+  	      :name "files"
+  	      :root (asdf:system-relative-pathname
+  		     :cl-prebid
+  		     #+NIL (make-pathname :directory '(:relative "pub"))
+  		     (cl-fad:merge-pathnames-as-directory  (user-homedir-pathname) (make-pathname :directory '(:relative
+  													       "dev"
+  													       "workflow"
+  													       "images"
+  													       "podman-archives"
+  													       "databases")))
+  		     )
+  	      )
+
+  	     (page ("/form" :name "form") (REBLOCKS-UI2-DEMO/PAGES/FORM::MAKE-FORM-PAGE))
              (page ("/card" :name "card") (REBLOCKS-UI2-DEMO/PAGES/CARDS::MAKE-CARDS-PAGE))
              (page ("/text-input" :name "text-input") (REBLOCKS-UI2-DEMO/PAGES/TEXT-INPUT::MAKE-TEXT-INPUT-PAGE))
              (page ("/containers" :name "containers") (REBLOCKS-UI2-DEMO/PAGES/CONTAINERS::MAKE-CONTAINERS-PAGE))
              (page ("/button" :name "button") (REBLOCKS-UI2-DEMO/PAGES/BUTTONS::MAKE-BUTTONS-PAGE))
              (page ("/tabs" :name "tabs") (REBLOCKS-UI2-DEMO/PAGES/TABS::MAKE-TABS-PAGE))
-           
+             
 
-	     #+NIL (page ("/nav" :name "nav") (make-top-level-navigation))
+  	     #+NIL (page ("/nav" :name "nav") (make-top-level-navigation))
 
-	     (page ("/" :name "root") (make-instance 'a-string-widget :content "ROOT"))
-	     (page ("/one" :name "foo") (make-instance 'a-string-widget :content "ONE"))
-	     (page ("/two" :name "two") (make-instance 'a-string-widget :content "TWO"))
-	     #-NIL (page ("/three" :name "three") (make-instance 'cl-prebid-container :content (make-instance 'a-string-widget :content "THREE")))
-	     #+NIL (page ("/three" :name "three") (make-instance 'a-string-widget :content "THREE"))
+  	     (page ("/" :name "root") (make-instance 'string-tailwind-test-widget :content "ROOT"))
+  	     (page ("/string-tailwind-test-widget" :name "string-tailwind-test-widget") (make-instance 'string-tailwind-test-widget :content "ONE"))
+  	     (page ("/reblocks-lass-test-widget" :name "reblocks-lass-test-widget") (make-instance 'reblocks-lass-test-widget))
+	     (page ("/cl-prebid-container" :name "cl-prebid-container") (make-instance
+									 'cl-prebid-container
+									 :content (make-instance 'string-tailwind-test-widget :content "THREE")))
 
-	     (page ("/banner" :name "banner") (make-instance 'prebid-banner-widget))
-	     (page ("/native" :name "native") (make-instance 'prebid-native-widget))
-#|
+  	     (page ("/banner" :name "banner") (make-instance 'prebid-banner-widget))
+  	     (page ("/native" :name "native") (make-instance 'prebid-native-widget))
+  #|
 	     (40ants-routes/defroutes:get ("/pub3/<int:id>" :name "article")
 					  (progn
 					    (clouseau:inspect (list :id id reblocks/session::*env*))
