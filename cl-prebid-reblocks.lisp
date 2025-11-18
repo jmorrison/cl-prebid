@@ -143,6 +143,35 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defwidget tailwind-test-widget (reblocks-ui2/widget:ui-widget)
+  ())
+
+(defmethod reblocks-ui2/widget:render ((widget tailwind-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  (with-html ()
+    (:div
+     :id "tailwind-test-widget"
+
+     ;; These are styled with our locally-built, enormously
+     ;; over-inclusive tailwind css file
+
+     (:div :id "tailwind00" :class "mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white"
+	   (:a "tailwind00 text"))
+     (:div :id "header" (:h1 :class "text-2xl my-8" (:a "header text")))
+     (:div :id "foo" :class "text-8xl text-gray-500 dar:text-gray-400" (:a "FOOO")))
+    #+NIL (call-next-method)))
+
+(defmethod reblocks-ui2/widget:get-dependencies ((widget tailwind-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  #+NIL (clouseau:inspect (list :get-dependencies widget theme))
+  (list*
+   (reblocks/dependencies:make-dependency
+    #P"./my-tailwind/output.css"
+    :system :cl-prebid
+    :type :css
+    :crossorigin "anonymous"
+    ;; :cache-in-memory t
+    )
+   (call-next-method)))
+
 ;;
 ;; (reblocks/preview:preview (make-instance 'todo::cl-prebid-container))
 ;;
@@ -157,23 +186,15 @@
     :accessor content
     :initform nil)))
 
-(defmethod reblocks-ui2/widget:render ((cpc cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
+(defmethod reblocks-ui2/widget:render ((widget cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render widget))
   (with-html ()
     (:div
      :id "foobar"
 
-     ;; These are styled with our locally-built, enormously
-     ;; over-inclusive tailwind css file
-
-     (:div :id "tailwind00" :class "mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white"
-	   (:a "tailwind00 text"))
-     (:div :id "header" (:h1 :class "text-2xl my-8" (:a "header text")))
-     (:div :id "foo" :class "text-8xl text-gray-500 dar:text-gray-400" (:a "FOOO"))
-
      ;; Here we render the contents of this container
 
-     (:div :content (reblocks-ui2/widget:render (content cpc) theme))
+     (:div :content (reblocks-ui2/widget:render (content widget) theme))
      )
     )
   )
@@ -216,7 +237,7 @@
     :initform (symbol-name (gensym "prebid-banner")))))
 
 (defmethod render ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render cpc))
+  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render widget))
   (with-html ()
     (:script
      (:raw
@@ -328,7 +349,7 @@
   ((div-id :accessor div-id :initform (symbol-name (gensym "prebid-native")))))
 
 (defmethod render ((widget prebid-native-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render :prebid-native-widget cpc))
+  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render :prebid-native-widget widget))
   (with-html ()
     #-NIL (:script (:raw "alert('prebid-native-widget');"))
     #-NIL
@@ -459,6 +480,7 @@
 
 					'("banner" "Banner")
 					'("string-tailwind-test-widget" "String Tailwind Test Widget")
+					'("tailwind-test-widget" "Tailwind Test Widget")
 					'("reblocks-lass-test-widget" "Reblocks Lass Test Widget")
   					'("cl-prebid-container" "CL Prebid Container")
 
@@ -573,6 +595,7 @@
 
   	     (page ("/" :name "root") (make-instance 'string-tailwind-test-widget :content "ROOT"))
   	     (page ("/string-tailwind-test-widget" :name "string-tailwind-test-widget") (make-instance 'string-tailwind-test-widget :content "ONE"))
+  	     (page ("/tailwind-test-widget" :name "tailwind-test-widget") (make-instance 'tailwind-test-widget))
   	     (page ("/reblocks-lass-test-widget" :name "reblocks-lass-test-widget") (make-instance 'reblocks-lass-test-widget))
 	     (page ("/cl-prebid-container" :name "cl-prebid-container") (make-instance
 									 'cl-prebid-container
