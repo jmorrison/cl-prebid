@@ -158,7 +158,7 @@
 	   (:a "tailwind00 text"))
      (:div :id "header" (:h1 :class "text-2xl my-8" (:a "header text")))
      (:div :id "foo" :class "text-8xl text-gray-500 dar:text-gray-400" (:a "FOOO"))
-     #-NIL (:div :id "Font test 1" :class "font-custom text-8xl" (:a "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+     #-NIL (:div :id "Font test 1" :class "font-custom text-2xl" (:a "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
      #-NIL (:div :id "Font test 2" :class "text-2xl" (:a "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
      #-NIL (:div :id "Font test 3" :class "font-custom text-2xl" (:a "abcdefghijklmnopqrstuvwxyz"))
      #-NIL (:div :id "Font test 4" :class "text-2xl" (:a "abcdefghijklmnopqrstuvwxyz"))
