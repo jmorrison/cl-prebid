@@ -1,3 +1,11 @@
+@font-face {
+      font-family: 'TanerArdali'; /* Give your font a name */
+      src: url('/pub/fonts/Taner Ardali - Santral-Light.woff') format('woff'),
+           url('/pub/fonts/Taner Ardali - Santral-Light.otf') format('otf');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap; /* Improves performance */
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

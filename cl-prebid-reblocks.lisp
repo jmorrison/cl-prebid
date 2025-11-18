@@ -157,7 +157,14 @@
      (:div :id "tailwind00" :class "mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white"
 	   (:a "tailwind00 text"))
      (:div :id "header" (:h1 :class "text-2xl my-8" (:a "header text")))
-     (:div :id "foo" :class "text-8xl text-gray-500 dar:text-gray-400" (:a "FOOO")))
+     (:div :id "foo" :class "text-8xl text-gray-500 dar:text-gray-400" (:a "FOOO"))
+     #-NIL (:div :id "Font test 1" :class "font-custom text-8xl" (:a "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+     #-NIL (:div :id "Font test 2" :class "text-2xl" (:a "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+     #-NIL (:div :id "Font test 3" :class "font-custom text-2xl" (:a "abcdefghijklmnopqrstuvwxyz"))
+     #-NIL (:div :id "Font test 4" :class "text-2xl" (:a "abcdefghijklmnopqrstuvwxyz"))
+     #-NIL (:div :id "Font test 6" :class "font-custom text-2xl" (:a "The quick brown fox jumps over the lazy dog"))
+     #-NIL (:div :id "Font test 6" :class "text-2xl" (:a "The quick brown fox jumps over the lazy dog"))
+     )
     #+NIL (call-next-method)))
 
 (defmethod reblocks-ui2/widget:get-dependencies ((widget tailwind-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
@@ -470,28 +477,30 @@
                                                               menu-item-classes
                                                               (REBLOCKS-UI2/THEMES/TAILWIND::colors-bg-action theme)))
                  (sections (append
-                            (sort (list '("button" "Button")
-                                        '("form" "Form")
-                                        '("text-input" "Text Input")
-                                        '("card" "Card")
-                                        '("containers" "Containers")
-                                        '("tabs" "Tabs")
+                            (sort (list
+				   #|
+				   '("button" "Button")
+                                   '("form" "Form")
+                                   '("text-input" "Text Input")
+                                   '("card" "Card")
+                                   '("containers" "Containers")
+                                   '("tabs" "Tabs")
+				   |#
 
+				   '("banner" "Banner")
+				   '("string-tailwind-test-widget" "String Tailwind Test Widget")
+				   '("tailwind-test-widget" "Tailwind Test Widget")
+				   '("reblocks-lass-test-widget" "Reblocks Lass Test Widget")
+  				   '("cl-prebid-container" "CL Prebid Container")
 
-					'("banner" "Banner")
-					'("string-tailwind-test-widget" "String Tailwind Test Widget")
-					'("tailwind-test-widget" "Tailwind Test Widget")
-					'("reblocks-lass-test-widget" "Reblocks Lass Test Widget")
-  					'("cl-prebid-container" "CL Prebid Container")
+  				   ;; '("css" "CSS")
+  				   ;; '("fonts" "Fonts")
+  				   ;; '("images" "Images")
+  				   ;; '("js" "JavaScript")
 
-  					;; '("css" "CSS")
-  					;; '("fonts" "Fonts")
-  					;; '("images" "Images")
-  					;; '("js" "JavaScript")
-
-  					)
-                                    #'string<
-                                    :key #'car)
+  				   )
+                                  #'string<
+                                  :key #'car)
                               (list
                                #+NIL '("sources" "Sources" :path "")))))
               (:ul :class "w-[200px] flex flex-col gap-4"
