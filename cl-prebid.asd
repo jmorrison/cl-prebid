@@ -115,6 +115,7 @@
 		 ;; #:reblocks-file-server
 		 #:assoc-utils		; The fukamachi one, which changes order of arguments
 		 #:clouseau
+		 #:com.symsim.oss.postgis
 		 )
     :components ((:file "package-reblocks")
 ;		 (:file "/home/jm/quicklisp/dists/quicklisp/software/reblocks-20241012-git/examples/simple-form")

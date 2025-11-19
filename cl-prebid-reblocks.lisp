@@ -527,9 +527,11 @@
                                    '("card" "Card")
                                    '("containers" "Containers")
                                    '("tabs" "Tabs")
-				   |#
 
 				   '("banner" "Banner")
+
+				   |#
+
 				   '("string-tailwind-test-widget" "String Tailwind Test Widget")
 				   '("tailwind-test-widget" "Tailwind Test Widget")
 				   '("reblocks-lass-test-widget" "Reblocks Lass Test Widget")
@@ -598,29 +600,42 @@
 (defwidget postgis-login-form-page ()
   ((submittedp :initform nil
                :type boolean
-               :accessor submittedp)))
+               :accessor submittedp)
+   (pghost :accessor pghost)
+   (pgport :accessor pgport)
+   (dbname :accessor dbname)
+   (pguser :accessor pguser)
+   (pgpassword :accessor pgpassword)))
 
 
 (defun make-postgis-login-form-page ()
   (make-instance 'postgis-login-form-page))
 
-(defmethod reblocks/widget:render ((widget postgis-login-form-page) #+NIL (theme tailwind-theme))
+(defmethod reblocks/widget:render ((widget postgis-login-form-page))
   (with-html ()
     (:h2 :class "text-xl my-4"
-         "Simple sign up form")
+         "PostGIS Connection Parameters")
     (cond
       ((submittedp widget)
+       (let ((db nil))
+	 (clouseau:inspect (list :submittedp widget))
+	 (setf db (make-instance 'com.symsim.oss.postgis::db-cache
+				 :host (pghost widget)
+				 :user (pguser widget)
+				 :password (pgpassword widget)
+				 :port (pgport widget)
+				 :db-name (dbname widget)))
+	 (clouseau:inspect (list :db db)))
        (reblocks/widget:render
         (form
          (row (make-string-widget
                "Thank you for submission!!!!!!!!")
-              (button "Try again"
-                      :view :action))
+              #+NIL (button "Try again" :view :action))
          :on-submit
          (lambda (form)
            (declare (ignore form))
            (log:warn "Form reset was called")
-	   #+NIL (clouseau:inspect (list :on-submit form *current-app*))
+	   #-NIL (clouseau:inspect (list :on-submit form))
            (setf (submittedp widget)
                  nil)
            (update widget)))))
@@ -629,42 +644,43 @@
         (form
          (column
           (row
-           (input :name "name"
-                  :placeholder "Name"
+	   (input :name "pghost"
+		  :placeholder "pghost"
+		  :validator (valid-string)
+		  :size :xl)
+           (input :name "pgport"
+                  :placeholder "5432"
+                  :validator (valid-integer :min 18)
+                  :size :xl))
+	  (row
+	   (input :name "pguser"
+		  :placeholder "pguser"
+		  :validator (valid-string)
+		  :size :xl)
+	   (input :name "dbname"
+                  :placeholder "dbname"
                   :validator (valid-string)
-                  :size :xl)
-           (input :name "email"
-                  :type :email
-                  :placeholder "Email"
                   :size :xl))
           (row
-           (input :name "age"
-                  :placeholder "Age"
-                  :validator (valid-integer :min 18)
-                  :size :xl)
-           (input :name "password"
+           (input :name "pgpassword"
                   :type :password
                   :validator
-                  (valid-password
-                   :min-length 8
-                   :required-symbols '((2 . "0123456789")
-                                       (1 . ",.@#$%^&*!"))
-                   :error "Password should be at least 8 symbols length and include 2 digits and 1 punctuation sign.")
+		  (valid-password :min-length 1)
                   :size :xl
-                  :placeholder "Password"))
+                  :placeholder "siminabox"))
           (reblocks-ui2/containers/controls-row:controls-row
-           (button "Sign Up"
-                   :view :action)))
+           (button "Open Connection to PostGIS" :view :action)))
          :on-submit
-         (lambda (form &key name email age password)
+         (lambda (form &key pghost pguser dbname #+NIL email pgport pgpassword)
            (declare (ignore form))
-           (log:warn "On Submit was called:" name email age password)
-	   #+NIL (clouseau:inspect (list :submit1 name email age password *current-app*))
+           (log:warn "On Submit was called:" pghost pguser dbname #+NIL email pgport pgpassword)
+	   (setf (pghost widget) pghost)
+	   (setf (pgport widget) pgport)
+	   (setf (dbname widget) dbname)
+	   (setf (pguser widget) pguser)
+	   (setf (pgpassword widget) pgpassword)
            (setf (submittedp widget) t)
-	   #+NIL (clouseau:inspect (list :submit2 name email age password *current-app*))
-	   (update widget)
-           #+NIL (clouseau:inspect (list :submit3 name email age password *current-app*)))))))
-    #+NIL (call-next-method)))
+	   (update widget))))))))
 
 
 
