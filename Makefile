@@ -77,7 +77,7 @@ test-weblocks: # $(PREBID_JS)
 #
 
 test-reblocks: # $(PREBID_JS)
-	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
+#	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
 	sbcl --eval "(ql:quickload '(:cl-prebid/reblocks))" --eval "(cl-prebid/reblocks::start)"
 
 #+NIL
