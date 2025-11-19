@@ -7,8 +7,42 @@
 
 (in-package #:cl-prebid/reblocks)
 
+(shadowing-import 'reblocks-ui2-demo/server::*default-interface*)
+(shadowing-import 'reblocks-ui2-demo/server::*default-port*)
+(shadowing-import 'reblocks-ui2-demo/server::*default-request-timeout*)
+(shadowing-import 'reblocks-ui2/buttons/button:button)
+(shadowing-import 'reblocks-ui2/containers/column:column)
+(shadowing-import 'reblocks-ui2/containers/column:column-widget)
+(shadowing-import 'reblocks-ui2/containers/container:subwidgets)
+(shadowing-import 'reblocks-ui2/containers/row:row)
+(shadowing-import 'reblocks-ui2/form/validators:valid-integer)
+(shadowing-import 'reblocks-ui2/form/validators:valid-password)
+(shadowing-import 'reblocks-ui2/form/validators:valid-string)
+(shadowing-import 'reblocks-ui2/form:form)
+(shadowing-import 'reblocks-ui2/inputs/text-input:input)
+(shadowing-import 'reblocks-ui2/themes/styling:join-css-classes)
+(shadowing-import 'reblocks-ui2/themes/tailwind:tailwind-theme)
+(shadowing-import 'reblocks-ui2/widget:get-dependencies)
+(shadowing-import 'reblocks-ui2/widget:render)
+(shadowing-import 'reblocks-ui2/widget:ui-widget)
+(shadowing-import 'reblocks/dependencies:make-dependency)
+(shadowing-import 'reblocks/variables:*max-pages-per-session*)
+(shadowing-import 'reblocks/variables:*pages-expire-in*)
+(shadowing-import 'reblocks/widgets/string-widget:make-string-widget)
+;; (shadowing-import 'reblocks-ui2/containers/controls-row:controls-row)
+;; (shadowing-import 'reblocks-ui2/themes/tailwind:make-tailwind-theme)
+;; (shadowing-import 'reblocks/server:start)
+
+(shadowing-import 'reblocks-ui2-demo/pages/buttons::make-buttons-page)
+(shadowing-import 'reblocks-ui2-demo/pages/cards::make-cards-page)
+(shadowing-import 'reblocks-ui2-demo/pages/containers::make-containers-page)
+(shadowing-import 'reblocks-ui2-demo/pages/form::make-form-page)
+(shadowing-import 'reblocks-ui2-demo/pages/tabs::make-tabs-page)
+(shadowing-import 'reblocks-ui2-demo/pages/text-input::make-text-input-page)
+
+
 (trace REBLOCKS-FILE-SERVER/CORE::FILE-SERVER-HANDLER :break nil)
-(trace (method reblocks-ui2/widget:render (reblocks-file-server/core::file-widget reblocks-ui2/themes/tailwind::tailwind-theme)) :break nil)
+;; (trace (method reblocks-ui2/widget:render (reblocks-file-server/core::file-widget tailwind-theme)) :break nil)
 
 ;;
 ;; Kludge to prevent dependency on CDN-delivered tailwind.
@@ -19,10 +53,10 @@
 ;; CDN dependency from those returned by call-next-method
 ;;
 
-(defmethod reblocks-ui2/widget:get-dependencies ((widget reblocks-ui2/widget:ui-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :get-dependencies :reblocks-ui2/ui-widget widget theme))
+(defmethod get-dependencies ((widget ui-widget) (theme tailwind-theme))
+  #+NIL (clouseau:inspect (list :get-dependencies :ui-widget widget theme))
   (list*
-   (reblocks/dependencies:make-dependency
+   (make-dependency
     #P"./my-tailwind/output.css"
     :system :cl-prebid
     :type :css
@@ -66,7 +100,7 @@
 (defwidget string-tailwind-test-widget (ui-widget)
   ((content :accessor content :initarg :content :initform "")))
 
-(defmethod render ((widget string-tailwind-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod render ((widget string-tailwind-test-widget) (theme tailwind-theme))
   (reblocks-request-params (foo baz frob)
 		     (with-html ()
 		       (:div :class "text-2xl my-8" ; Reference tailwind style(s)
@@ -75,9 +109,9 @@
 			     (:p (format nil "param baz ~s" baz))
 			     (:p (format nil "param frob ~s" frob))))))
 
-(defmethod reblocks-ui2/widget:get-dependencies ((widget string-tailwind-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod get-dependencies ((widget string-tailwind-test-widget) (theme tailwind-theme))
   (list*
-   (reblocks/dependencies:make-dependency
+   (make-dependency
     #P"./my-tailwind/output.css"
     :system :cl-prebid
     :type :css
@@ -90,23 +124,23 @@
 ;; A lass (inline) styling test widget
 ;;
 
-(defwidget reblocks-lass-test-widget (reblocks-ui2/containers/column:column-widget)
-  ((reblocks-ui2/containers/container:subwidgets
+(defwidget reblocks-lass-test-widget (column-widget)
+  ((subwidgets
     :initform (list
-	       (reblocks/widgets/string-widget:make-string-widget "foo")
-	       (reblocks/widgets/string-widget:make-string-widget "bar")))))
+	       (make-string-widget "foo")
+	       (make-string-widget "bar")))))
 
-(defmethod reblocks-ui2/widget:render ((widget reblocks-lass-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod render ((widget reblocks-lass-test-widget) (theme tailwind-theme))
   (with-html ()
     (:div :id "banner" :class "banner" (:a "banner text"))
     (:div :id "bodystuff"
 	  :class "bodystuff"
 	  (:a "bodystuff text")
-	  (loop for item in (reblocks-ui2/containers/container:subwidgets widget) do
+	  (loop for item in (subwidgets widget) do
 		#+NIL (clouseau:inspect item)
-		(reblocks-ui2/widget:render item theme)))))
+		(render item theme)))))
 
-(defmethod reblocks-ui2/widget:get-dependencies ((widget reblocks-lass-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod get-dependencies ((widget reblocks-lass-test-widget) (theme tailwind-theme))
   (list*
    (reblocks-lass:make-dependency
     '(.banner
@@ -118,7 +152,7 @@
       :border 20px solid "green"
       :padding 10em
       :background-color "pink"))
-   (reblocks/dependencies:make-dependency
+   (make-dependency
     #P"./my-tailwind/output.css"
     :system :cl-prebid
     :type :css
@@ -143,10 +177,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defwidget tailwind-test-widget (reblocks-ui2/widget:ui-widget)
+(defwidget tailwind-test-widget (ui-widget)
   ())
 
-(defmethod reblocks-ui2/widget:render ((widget tailwind-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod render ((widget tailwind-test-widget) (theme tailwind-theme))
   (with-html ()
     (:div
      :id "tailwind-test-widget"
@@ -168,10 +202,10 @@
      )
     #+NIL (call-next-method)))
 
-(defmethod reblocks-ui2/widget:get-dependencies ((widget tailwind-test-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod get-dependencies ((widget tailwind-test-widget) (theme tailwind-theme))
   #+NIL (clouseau:inspect (list :get-dependencies widget theme))
   (list*
-   (reblocks/dependencies:make-dependency
+   (make-dependency
     #P"./my-tailwind/output.css"
     :system :cl-prebid
     :type :css
@@ -184,25 +218,25 @@
 ;; (reblocks/preview:preview (make-instance 'todo::cl-prebid-container))
 ;;
 
-(defwidget cl-prebid-container (reblocks-ui2/containers/column:column-widget)
-  ((reblocks-ui2/containers/container:subwidgets
+(defwidget cl-prebid-container (column-widget)
+  ((subwidgets
     :initform (list
-	       (reblocks/widgets/string-widget:make-string-widget "foo")
-	       (reblocks/widgets/string-widget:make-string-widget "bar")))
+	       (make-string-widget "foo")
+	       (make-string-widget "bar")))
    (content
     :initarg :content
     :accessor content
     :initform nil)))
 
-(defmethod reblocks-ui2/widget:render ((widget cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render widget))
+(defmethod render ((widget cl-prebid-container) (theme tailwind-theme))
+  #+NIL (clouseau:inspect (list :widget-render widget))
   (with-html ()
     (:div
      :id "foobar"
 
      ;; Here we render the contents of this container
 
-     (:div :content (reblocks-ui2/widget:render (content widget) theme))
+     (:div :content (render (content widget) theme))
      )
     )
   )
@@ -210,10 +244,10 @@
 ;; https://40ants.com/reblocks/dependencies/#x-28REBLOCKS-2FDOC-2FDEPENDENCIES-3A-3A-40DEPENDENCIES-2040ANTS-DOC-2FLOCATIVES-3ASECTION-29
 
 #-NIL
-(defmethod reblocks-ui2/widget:get-dependencies ((widget cl-prebid-container) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod get-dependencies ((widget cl-prebid-container) (theme tailwind-theme))
   #+NIL (clouseau:inspect (list :get-dependencies widget theme))
   (list*
-   (reblocks/dependencies:make-dependency
+   (make-dependency
     #P"./my-tailwind/output.css"
     :system :cl-prebid
     :type :css
@@ -248,8 +282,8 @@
     :accessor div-id
     :initform (symbol-name (gensym "prebid-banner")))))
 
-(defmethod render ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render widget))
+(defmethod render ((widget prebid-banner-widget) (theme tailwind-theme))
+  #+NIL (clouseau:inspect (list :widget-render widget))
   (with-html ()
     (:script
      (:raw
@@ -323,10 +357,10 @@
   )
 
 
-(defmethod reblocks-ui2/widget:get-dependencies ((widget prebid-banner-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod get-dependencies ((widget prebid-banner-widget) (theme tailwind-theme))
   #+NIL (clouseau:inspect (list :get-dependencies :prebid-banner-widget widget theme))
   (list
-   (reblocks/dependencies:make-dependency
+   (make-dependency
     #P"./Prebid.js/dist/not-for-prod/prebid.js"
     :system :cl-prebid
     :type :js
@@ -334,7 +368,7 @@
     ;; :cache-in-memory t
     )
    #+NIL
-   (reblocks/dependencies:make-dependency
+   (make-dependency
     #P"./pub/js/prebid-banner.js"
     :system :cl-prebid
     :type :js
@@ -360,8 +394,8 @@
 (defwidget prebid-native-widget (ui-widget)
   ((div-id :accessor div-id :initform (symbol-name (gensym "prebid-native")))))
 
-(defmethod render ((widget prebid-native-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
-  #+NIL (clouseau:inspect (list :reblocks-ui2/widget-render :prebid-native-widget widget))
+(defmethod render ((widget prebid-native-widget) (theme tailwind-theme))
+  #+NIL (clouseau:inspect (list :widget-render :prebid-native-widget widget))
   (with-html ()
     #-NIL (:script (:raw "alert('prebid-native-widget');"))
     #-NIL
@@ -411,10 +445,10 @@
        `(ps:chain googletag cmd (push (lambda ()
 					(ps:chain googletag (display ,(div-id widget)))))))))))
 
-(defmethod reblocks-ui2/widget:get-dependencies ((widget prebid-native-widget) (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod get-dependencies ((widget prebid-native-widget) (theme tailwind-theme))
   #+NIL (clouseau:inspect (list :get-dependencies :prebid-banner-widget widget theme))
   (list
-   (reblocks/dependencies:make-dependency
+   (make-dependency
     #P"./Prebid.js/dist/not-for-prod/prebid.js"
     :system :cl-prebid
     :type :js
@@ -422,7 +456,7 @@
     ;; :cache-in-memory t
     )
    #+NIL
-   (reblocks/dependencies:make-dependency
+   (make-dependency
     #P"./pub/js/prebid-banner.js"
     :system :cl-prebid
     :type :js
@@ -446,7 +480,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defwidget page-frame-widget (reblocks-ui2/widget::ui-widget)
+(defwidget page-frame-widget (ui-widget)
   ((banner
     :accessor banner
     :initform (make-instance 'prebid-banner-widget))
@@ -478,9 +512,10 @@
 
     (:div :class "flex"
           (let* ((menu-item-classes "text-xl py-2 px-4 shadow-lg hover:shadow-md rounded-r-xl border border-stone-200")
-                 (current-menu-item-classes (REBLOCKS-UI2/THEMES/STYLING:join-css-classes theme
-                                                              menu-item-classes
-                                                              (REBLOCKS-UI2/THEMES/TAILWIND::colors-bg-action theme)))
+                 (current-menu-item-classes (join-css-classes
+					     theme
+                                             menu-item-classes
+                                             (:colors-bg-action theme)))
                  (sections (append
                             (sort (list
 				   #|
@@ -569,15 +604,16 @@
 (defun make-postgis-login-form-page ()
   (make-instance 'postgis-login-form-page))
 
-(defmethod reblocks/widget:render ((widget postgis-login-form-page) #+NIL (theme reblocks-ui2/themes/tailwind:tailwind-theme))
+(defmethod reblocks/widget:render ((widget postgis-login-form-page) #+NIL (theme tailwind-theme))
   (with-html ()
     (:h2 :class "text-xl my-4"
          "Simple sign up form")
     (cond
       ((submittedp widget)
        (render
-        (reblocks-ui2/form:form
-         (reblocks-ui2/containers/row:row (reblocks/widgets/string-widget:make-string-widget
+	(break "RENDER")
+        (form
+         (row (make-string-widget
                "Thank you for submission!")
               (button "Try again"
                       :view :action))
@@ -585,31 +621,32 @@
          (lambda (form)
            (declare (ignore form))
            (log:warn "Form reset was called")
+	   (clouseau:inspect (list :on-submit form))
            (setf (submittedp widget)
                  nil)
            (update widget)))))
       (t
        (reblocks/widget:render
-        (reblocks-ui2/form:form
-         (reblocks-ui2/containers/column:column
-          (reblocks-ui2/containers/row:row
-           (reblocks-ui2/inputs/text-input:input :name "name"
+        (form
+         (column
+          (row
+           (input :name "name"
                   :placeholder "Name"
-                  :validator (reblocks-ui2/form/validators:valid-string)
+                  :validator (valid-string)
                   :size :xl)
-           (reblocks-ui2/inputs/text-input:input :name "email"
+           (input :name "email"
                   :type :email
                   :placeholder "Email"
                   :size :xl))
-          (reblocks-ui2/containers/row:row
-           (reblocks-ui2/inputs/text-input:input :name "age"
+          (row
+           (input :name "age"
                   :placeholder "Age"
-                  :validator (reblocks-ui2/form/validators:valid-integer :min 18)
+                  :validator (valid-integer :min 18)
                   :size :xl)
-           (reblocks-ui2/inputs/text-input:input :name "password"
+           (input :name "password"
                   :type :password
                   :validator
-                  (reblocks-ui2/form/validators:valid-password
+                  (valid-password
                    :min-length 8
                    :required-symbols '((2 . "0123456789")
                                        (1 . ",.@#$%^&*!"))
@@ -617,12 +654,13 @@
                   :size :xl
                   :placeholder "Password"))
           (reblocks-ui2/containers/controls-row:controls-row
-           (reblocks-ui2/buttons/button:button "Sign Up"
+           (button "Sign Up"
                    :view :action)))
          :on-submit
-         (lambda (reblocks-ui2/form:form &key name email age password)
+         (lambda (form &key name email age password)
            (declare (ignore form))
            (log:warn "On Submit was called:" name email age password)
+	   (clouseau:inspect (list :submit name email age password))
            (setf (submittedp widget)
                  t)
            (update widget))))))
@@ -682,12 +720,12 @@
   		     )
   	      )
 
-  	     (page ("/form" :name "form") (REBLOCKS-UI2-DEMO/PAGES/FORM::MAKE-FORM-PAGE))
-             (page ("/card" :name "card") (REBLOCKS-UI2-DEMO/PAGES/CARDS::MAKE-CARDS-PAGE))
-             (page ("/text-input" :name "text-input") (REBLOCKS-UI2-DEMO/PAGES/TEXT-INPUT::MAKE-TEXT-INPUT-PAGE))
-             (page ("/containers" :name "containers") (REBLOCKS-UI2-DEMO/PAGES/CONTAINERS::MAKE-CONTAINERS-PAGE))
-             (page ("/button" :name "button") (REBLOCKS-UI2-DEMO/PAGES/BUTTONS::MAKE-BUTTONS-PAGE))
-             (page ("/tabs" :name "tabs") (REBLOCKS-UI2-DEMO/PAGES/TABS::MAKE-TABS-PAGE))
+  	     (page ("/form" :name "form") (make-form-page))
+             (page ("/card" :name "card") (make-cards-page))
+             (page ("/text-input" :name "text-input") (make-text-input-page))
+             (page ("/containers" :name "containers") (make-containers-page))
+             (page ("/button" :name "button") (make-buttons-page))
+             (page ("/tabs" :name "tabs") (make-tabs-page))
              
 
   	     #+NIL (page ("/nav" :name "nav") (make-top-level-navigation))
@@ -716,7 +754,7 @@
 (defmethod reblocks/dependencies:get-dependencies ((app my-app))
   (clouseau:inspect app)
   (list*
-   (reblocks/dependencies:make-dependency
+   (make-dependency
      "https://cdn.tailwindcss.com/3.3.6"
      ;; Old URLs:
      ;; "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"
@@ -733,14 +771,14 @@
 	      &key
 		(port (parse-integer
 		       (or (uiop:getenv "PORT")
-			   reblocks-ui2-demo/server::*default-port*)))
+			   *default-port*)))
 		(server-type :hunchentoot)
-		(interface reblocks-ui2-demo/server::*default-interface*)
-		(request-timeout reblocks-ui2-demo/server::*default-request-timeout*)
+		(interface *default-interface*)
+		(request-timeout *default-request-timeout*)
 		(debug t))
 
-  (setf reblocks/variables:*pages-expire-in* (* 10 60))
-  (setf reblocks/variables:*max-pages-per-session* 10)
+  (setf *pages-expire-in* (* 10 60))
+  (setf *max-pages-per-session* 10)
 
   (setf *current-theme*
         (reblocks-ui2/themes/tailwind:make-tailwind-theme))
@@ -748,11 +786,11 @@
   #-NIL
   (reblocks/server:start :port port
 			 :interface interface
-                         :apps 'my-app
-                         :server-type server-type
-                         :request-timeout request-timeout
-                         :debug debug)
+			 :apps 'my-app
+			 :server-type server-type
+			 :request-timeout request-timeout
+			 :debug debug)
 
   #+NIL
-  (apply 'reblocks-ui2-demo/server::start args)
+  (apply 'reblocks/server:start args)
   )
