@@ -26,8 +26,10 @@
 (shadowing-import 'reblocks-ui2/widget:render)
 (shadowing-import 'reblocks-ui2/widget:ui-widget)
 (shadowing-import 'reblocks/dependencies:make-dependency)
+(shadowing-import 'reblocks/variables:*current-app*)
 (shadowing-import 'reblocks/variables:*max-pages-per-session*)
 (shadowing-import 'reblocks/variables:*pages-expire-in*)
+(shadowing-import 'reblocks/widget:update)
 (shadowing-import 'reblocks/widgets/string-widget:make-string-widget)
 ;; (shadowing-import 'reblocks-ui2/containers/controls-row:controls-row)
 ;; (shadowing-import 'reblocks-ui2/themes/tailwind:make-tailwind-theme)
@@ -520,9 +522,7 @@
                             (sort (list
 				   #|
 				   '("button" "Button")
-				   |#
                                    '("form" "Form")
-				   #|
                                    '("text-input" "Text Input")
                                    '("card" "Card")
                                    '("containers" "Containers")
@@ -610,18 +610,17 @@
          "Simple sign up form")
     (cond
       ((submittedp widget)
-       (render
-	(break "RENDER")
+       (reblocks/widget:render
         (form
          (row (make-string-widget
-               "Thank you for submission!")
+               "Thank you for submission!!!!!!!!")
               (button "Try again"
                       :view :action))
          :on-submit
          (lambda (form)
            (declare (ignore form))
            (log:warn "Form reset was called")
-	   (clouseau:inspect (list :on-submit form))
+	   #+NIL (clouseau:inspect (list :on-submit form *current-app*))
            (setf (submittedp widget)
                  nil)
            (update widget)))))
@@ -660,10 +659,11 @@
          (lambda (form &key name email age password)
            (declare (ignore form))
            (log:warn "On Submit was called:" name email age password)
-	   (clouseau:inspect (list :submit name email age password))
-           (setf (submittedp widget)
-                 t)
-           (update widget))))))
+	   #+NIL (clouseau:inspect (list :submit1 name email age password *current-app*))
+           (setf (submittedp widget) t)
+	   #+NIL (clouseau:inspect (list :submit2 name email age password *current-app*))
+	   (update widget)
+           #+NIL (clouseau:inspect (list :submit3 name email age password *current-app*)))))))
     #+NIL (call-next-method)))
 
 
@@ -695,6 +695,7 @@
   (defapp my-app
       :prefix "/"
       :page-constructor #'wrap-with-frame
+      :debug t
       :routes (
   	     (reblocks/routes:static-file
   	      "/favicon.ico"
