@@ -608,6 +608,51 @@
    (pgpassword :accessor pgpassword)))
 
 
+
+(defmethod connect-to-db ((widget postgis-login-form-page))
+  (let ((db (make-instance 'com.symsim.oss.postgis::db-cache
+			   :host     #+NIL "localhost" #-NIL (coerce (pghost widget) 'simple-string)
+			   :user     #+NIL "siminabox" #-NIL (pguser widget)
+			   :password #+NIL "siminabox" #-NIL (pgpassword widget)
+			   :port     #+NIL 5432        #-NIL (pgport widget)
+			   :db-name  #+NIL "siminabox" #-NIL (dbname widget))))
+    ;; (clouseau:inspect (list :submittedp widget))
+    #+NIL (clouseau:inspect (list :db 1 db))
+    (let ((retval nil))
+      (setf retval (handler-case (com.symsim.oss.postgis::connect-to-postgis db)
+		     (cl-postgres:database-socket-error (c)
+		       (clouseau:inspect (list :db 2 db))
+		       (break (format nil "database-socket-error ~s" c))
+		       (sb-ext:quit)
+		       (return-from connect-to-db nil))
+		     (cl-postgres:database-error (c)
+		       (clouseau:inspect (list :db 3 db))
+		       (break (format nil "database-error ~s" c))
+		       (sb-ext:quit)
+		       (return-from connect-to-db nil))
+		     (simple-error (c)
+		       (clouseau:inspect (list :db 4 db))
+		       (break (format nil "simple-error ~s" c))
+		       (sb-ext:quit)
+		       (return-from connect-to-db nil))
+		     (condition (c)
+		       (clouseau:inspect (list :db 5 db))
+		       (break (format nil "simple-error ~s" c))
+		       (sb-ext:quit)
+		       (return-from connect-to-db nil))))
+      #+NIL (clouseau:inspect (list :db 7 retval))
+      #+NIL (clouseau:inspect (list :db 8 (COM.SYMSIM.OSS.POSTGIS:TABLES-LIST db)))
+      #+NIL (pprint (COM.SYMSIM.OSS.POSTGIS:TABLES-LIST db))
+      #+NIL (break "after handler-case")
+      #+NIL (sb-ext:quit)
+      db)
+    )
+  )
+
+;; (trace com.symsim.oss.postgis::connect-to-postgis)
+;; (trace postmodern::connect-toplevel)
+;; (trace connect-to-db)
+
 (defun make-postgis-login-form-page ()
   (make-instance 'postgis-login-form-page))
 
@@ -617,15 +662,6 @@
          "PostGIS Connection Parameters")
     (cond
       ((submittedp widget)
-       (let ((db nil))
-	 (clouseau:inspect (list :submittedp widget))
-	 (setf db (make-instance 'com.symsim.oss.postgis::db-cache
-				 :host (pghost widget)
-				 :user (pguser widget)
-				 :password (pgpassword widget)
-				 :port (pgport widget)
-				 :db-name (dbname widget)))
-	 (clouseau:inspect (list :db db)))
        (reblocks/widget:render
         (form
          (row (make-string-widget
@@ -679,6 +715,7 @@
 	   (setf (dbname widget) dbname)
 	   (setf (pguser widget) pguser)
 	   (setf (pgpassword widget) pgpassword)
+	   (connect-to-db widget)
            (setf (submittedp widget) t)
 	   (update widget))))))))
 
