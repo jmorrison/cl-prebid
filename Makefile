@@ -2,6 +2,8 @@
 # Building and testing Common Lisp implementation of Prebid
 #
 
+SBCL=/usr/bin/sbcl
+
 #
 # JavaScript dependencies are excruciatingly brittle.
 #
@@ -24,7 +26,8 @@ GULP_COMMAND=serve-prod
 
 PREBID_TAG=10.4.0
 PREBID_JS_DIR=Prebid.js
-PREBID_JS=$(PREBID_JS_DIR)/dist/not-for-prod/prebid.js
+#PREBID_JS=$(PREBID_JS_DIR)/dist/not-for-prod/prebid.js
+PREBID_JS=$(PREBID_JS_DIR)/build/dist/prebid.js
 PREBID_MODULES=--modules=openxBidAdapter,rubiconBidAdapter,sovrnBidAdapter
 
 $(PREBID_JS_DIR): 
@@ -49,6 +52,12 @@ $(TW_DIR)/output.css: $(TW_DIR)/node_modules
 # Testing targets
 #
 
+#
+# Open http://localhost:9999
+# but ad-blockers in Firefox preclude
+# working
+#
+
 .PHONY: test-prebid test-cl-prebid test-cl-prebid2 test-reblocks
 
 test-prebid: $(PREBID_JS)
@@ -61,16 +70,18 @@ test-prebid: $(PREBID_JS)
 #
 # http://localhost:4242/
 #
+# requires https://github.com/prebid/Prebid.js/releases/tag/10.2.0
+#
 
 test-hunchentoot: # $(PREBID_JS)
-	sbcl --eval "(ql:quickload '(:weblocks :cxml :cl-prebid/hunchentoot))" --eval '(cl-prebid/hunchentoot::run)'
+	$(SBCL) --eval "(ql:quickload '(:weblocks :cxml :cl-prebid/hunchentoot))" --eval '(cl-prebid/hunchentoot::run)'
 
 #
 # http://localhost:8080/cl-prebid-weblocks
 #
 
 test-weblocks: # $(PREBID_JS)
-	sbcl --eval "(ql:quickload '(:cl-prebid/weblocks))" --eval '(cl-prebid/weblocks::run)'
+	$(SBCL) --eval "(ql:quickload '(:cl-prebid/weblocks))" --eval '(cl-prebid/weblocks::run)'
 
 #
 # Don't think I'll worry much about this right now
@@ -78,7 +89,7 @@ test-weblocks: # $(PREBID_JS)
 
 test-reblocks: # $(PREBID_JS)
 	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
-	sbcl --eval "(ql:quickload '(:trivial-backtrace :cl-prebid/reblocks))" --eval "(cl-prebid/reblocks::start)"
+	$(SBCL) --eval "(ql:quickload '(:trivial-backtrace :cl-prebid/reblocks))" --eval "(cl-prebid/reblocks::start)"
 
 #+NIL
 #(defvar *prebid-dep* (make-dependency
@@ -90,6 +101,6 @@ test-reblocks: # $(PREBID_JS)
 
 test-reblocks-demo: # $(PREBID_JS)
 #	rm -rfv ~/.cache/common-lisp/sbcl-2.1.1.6259.head.4-718ebe5e7-linux-x64/net/storage0/media/home/jm/quicklisp/local-projects/cl-prebid/
-	sbcl \
+	$(SBCL) \
          --eval "(ql:quickload '(:clack-handler-hunchentoot :40ants-routes :40ants-logging :reblocks-ui2 :reblocks-ui2-demo))" \
          --eval "(reblocks-ui2-demo/server:start)"
