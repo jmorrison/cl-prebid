@@ -363,7 +363,7 @@
   #+NIL (clouseau:inspect (list :get-dependencies :prebid-banner-widget widget theme))
   (list
    (make-dependency
-    #P"./Prebid.js/dist/not-for-prod/prebid.js"
+    #P"./Prebid.js/build/dist/prebid.js"
     :system :cl-prebid
     :type :js
     :crossorigin "anonymous"
@@ -451,7 +451,7 @@
   #+NIL (clouseau:inspect (list :get-dependencies :prebid-banner-widget widget theme))
   (list
    (make-dependency
-    #P"./Prebid.js/dist/not-for-prod/prebid.js"
+    #P"./Prebid.js/build/dist/prebid.js"
     :system :cl-prebid
     :type :js
     :crossorigin "anonymous"
